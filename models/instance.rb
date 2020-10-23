@@ -1,26 +1,9 @@
+require 'yaml'
+
 class Instance
   attr_reader :type
 
-  AWS_INSTANCES = {
-    gpu: { 
-      base: { 
-        name: "p3.2xlarge", cpus: 8, gpus: 1, mem: 61, price_per_min: 0.05982
-      },
-      multipliers: [1, 4, 8]
-    },
-    compute: {
-      base: {
-        name: "c5.large", cpus: 2, mem: 4, gpus: 0, price_per_min: 0.00168
-      },
-      multipliers: [1, 2, 4, 8, 13, 24, 32, 48]
-    },
-    mem: {
-      base: {
-        name: "r5.large", cpus: 2, mem: 16, gpus: 0, price_per_min: 0.00246
-      },
-      multipliers: [1, 2, 4, 8, 16, 24, 48]
-    }
-  }
+  AWS_INSTANCES = YAML.load(File.read("aws_instances.yml"))
 
   def initialize(type, multiplier = 1)
     raise ArgumentError, 'Not a valid instance type' if !AWS_INSTANCES.keys.include?(type.to_sym)
