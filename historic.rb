@@ -40,7 +40,14 @@ def determine_time(amount)
   (seconds / 60.0).ceil
 end
 
-file = File.open('frank_september_jobs.txt')
+user_args = Hash[ ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/) ]
+
+begin
+  file = File.open(user_args['input'])
+rescue TypeError
+  puts 'Please specify an input file.'
+  exit 1
+end
 header = file.first.chomp
 cols = header.split('|')
 cols.map! { |col| col.downcase.to_sym }
