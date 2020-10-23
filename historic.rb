@@ -40,7 +40,7 @@ def determine_time(amount)
   (seconds / 60.0).ceil
 end
 
-#file = File.open('hamilton_queue_sept.txt')
+file = File.open('frank_september_jobs.txt')
 header = file.first.chomp
 cols = header.split('|')
 cols.map! { |col| col.downcase.to_sym }
