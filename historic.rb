@@ -56,7 +56,7 @@ under_resourced_count = 0
 completed_jobs_count = 0
 overall_base_cost = 0.0
 overall_best_fit_cost = 0.0
-file.readlines.each_with_index do |line, index|
+file.readlines.each do |line|
   details = line.split("|")
   job = Job.new(*details)
   next if job.maxvmsize == "" # if empty, this is a job initiator, not a full job
@@ -72,7 +72,6 @@ file.readlines.each_with_index do |line, index|
     key_values = part.split("=")
     allocated_details[key_values[0]] = key_values[1]&.chomp
   end
->>>>>>> 20fc730... Convert details array to a Struct object
 
   cpus = allocated_details["cpu"].to_i
   # mem = allocated_details["mem"]
