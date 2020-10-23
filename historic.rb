@@ -42,7 +42,12 @@ end
 
 user_args = Hash[ ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/) ]
 
-file = File.open(user_args['input'])
+begin
+  file = File.open(user_args['input'])
+rescue TypeError
+  puts 'Please specify an input file.'
+  exit 1
+end
 header = file.first.chomp
 cols = header.split('|')
 cols.map! { |col| col.downcase.to_sym }
