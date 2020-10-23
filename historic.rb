@@ -1,4 +1,5 @@
-require_relative 'instance'
+require_relative './models/instance_calculator'
+require_relative './models/instance'
 
 # slurm gives remaining job times in the following formats:
 # "minutes", "minutes:seconds", "hours:minutes:seconds", "days-hours",
@@ -40,6 +41,7 @@ def determine_time(amount)
 end
 
 file = File.open('frank_september_jobs.txt')
+#file = File.open('hamilton_queue_sept.txt')
 max_mem = 0.0
 max_mem_per_core = 0.0
 mem_total = 0.0
@@ -91,8 +93,9 @@ file.readlines.each_with_index do |line, index|
 
     print "Job #{details[0]} used #{gpus} GPUs, #{cpus}CPUs & #{mem.ceil(2)}MB on #{nodes}node(s) for #{time.ceil(2)}mins. "
     
-    instance_numbers = Instance.base_instance_numbers(cpus, gpus, mem)
-    best_fit_instances = Instance.best_fit_instances(instance_numbers, nodes)
+    instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes)
+    instance_numbers = instance_calculator.base_instance_numbers(cpus, gpus, mem)
+    best_fit_instances = instance_calculator.best_fit_instances(instance_numbers, nodes)
     total_instances = instance_numbers.values.reduce(:+)
 
     cost_per_min = 0.0
