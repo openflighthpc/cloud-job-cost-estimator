@@ -56,6 +56,7 @@ under_resourced_count = 0
 completed_jobs_count = 0
 overall_base_cost = 0.0
 overall_best_fit_cost = 0.0
+
 file.readlines.each do |line|
   details = line.split("|")
   job = Job.new(*details)
@@ -95,7 +96,7 @@ file.readlines.each do |line|
   mem_count += 1
   cpu_count += cpus
 
-  print "Job #{job.jobid} used #{gpus} GPUs, #{cpus}CPUs & #{mem.ceil(2)}MB on #{nodes}node(s) for #{time.ceil(2)}mins. "
+  print "Job #{details[0]} used #{gpus} GPUs, #{cpus}CPUs & #{mem.ceil(2)}MB on #{nodes}node(s) for #{time.ceil(2)}mins."
 
   instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes)
   instance_numbers = instance_calculator.base_instance_numbers(cpus, gpus, mem)
@@ -133,19 +134,14 @@ file.readlines.each do |line|
 
   #puts "Can be serviced by base equivalent to #{instance_numbers}"
   #puts "Base on demand cost: $#{total_cost.ceil(2)}"
-
-  if best_fit_cost.ceil(2) != total_cost.ceil(2)
-    if best_fit_cost < total_cost
-      puts "No AWS instance combination exists that can acheive the needed resources in that many nodes"
-      under_resourced_count += 1
-    else
-      puts "To meet requirements, larger instance(s) required than base equivalent"
-      over_resourced_count += 1
-    end
-    print "Closest match:  #{best_fit_description} at cost of $#{best_fit_cost.ceil(2)}"
-  else
-    print "Instance config of #{best_fit_description} would cost $#{best_fit_cost.ceil(2)}"
+  if best_fit_instances.length > nodes
+    print " To meet requirements, extra nodes required."
   end
+  if best_fit_cost.ceil(2) > total_cost.ceil(2)
+    print " To meet requirements, larger instance(s) required than base equivalent."
+    over_resourced_count += 1
+  end
+  print " Instance config of #{best_fit_description} would cost $#{best_fit_cost.ceil(2)}."
   puts
   puts
 end
@@ -166,4 +162,3 @@ puts "Overall base cost: $#{overall_base_cost.ceil(2)}"
 puts "Average cost per job: $#{(overall_base_cost / completed_jobs_count).ceil(2)}"
 puts "Overall best fit cost: $#{overall_best_fit_cost.ceil(2)}"
 puts "#{over_resourced_count} jobs requiring larger instances than base equivalent"
-puts "#{under_resourced_count} jobs where no equivalent AWS instance combinations will meet all job requirements"
