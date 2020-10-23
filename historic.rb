@@ -34,7 +34,7 @@ def determine_time(amount)
     end
   else
     seconds += amount[0].to_i * 60 * 60 # hours
-    seconds += amount[1]. to_i * 60 # minutes
+    seconds += amount[1].to_i * 60 # minutes
     seconds += amount[2].to_i # seconds
   end
   (seconds / 60.0).ceil

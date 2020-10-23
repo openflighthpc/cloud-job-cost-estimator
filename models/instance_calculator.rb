@@ -68,6 +68,8 @@ class InstanceCalculator
     end
 
     if instance_numbers[:mem] > 0
+      # If we only have one node left to use and there are also compute instances to add,
+      # fold these into the mem count, so we can get 1 node that meets all total resource needs.
       if nodes == 1 && instance_numbers[:compute] > 0
         instance_numbers[:mem] = instance_numbers[:mem] + instance_numbers[:compute]
       end
