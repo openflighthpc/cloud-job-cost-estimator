@@ -34,7 +34,7 @@ def determine_time(amount)
     end
   else
     seconds += amount[0].to_i * 60 * 60 # hours
-    seconds += amount[1].to_i * 60 # minutes
+    seconds += amount[1]. to_i * 60 # minutes
     seconds += amount[2].to_i # seconds
   end
   (seconds / 60.0).ceil
@@ -56,7 +56,6 @@ under_resourced_count = 0
 completed_jobs_count = 0
 overall_base_cost = 0.0
 overall_best_fit_cost = 0.0
-
 file.readlines.each do |line|
   details = line.split("|")
   job = Job.new(*details)
@@ -75,11 +74,6 @@ file.readlines.each do |line|
   end
 
   cpus = allocated_details["cpu"].to_i
-  # mem = allocated_details["mem"]
-  # if mem
-  #   mem = mem.include?("M") ? (mem.gsub("M", "").to_i / 1000.0) : mem.gsub("GB", "").to_i
-  # end
-  # mem ||= 0.0
   nodes = allocated_details["node"].to_i
 
   max_rss = (job.maxrss[0...-1].to_f / 1000).ceil
@@ -96,7 +90,7 @@ file.readlines.each do |line|
   mem_count += 1
   cpu_count += cpus
 
-  print "Job #{details[0]} used #{gpus} GPUs, #{cpus}CPUs & #{mem.ceil(2)}MB on #{nodes}node(s) for #{time.ceil(2)}mins."
+  print "Job #{job.jobid} used #{gpus} GPUs, #{cpus}CPUs & #{mem.ceil(2)}MB on #{nodes}node(s) for #{time.ceil(2)}mins."
 
   instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes)
   instance_numbers = instance_calculator.base_instance_numbers(cpus, gpus, mem)

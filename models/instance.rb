@@ -43,7 +43,7 @@ class Instance
   end
 
   def mem
-    @base_mem * @multiplier
+    @base_mem * @multiplier # in GB
   end
 
   def price_per_min

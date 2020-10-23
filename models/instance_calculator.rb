@@ -5,7 +5,7 @@ class InstanceCalculator
   def initialize(total_cpus, total_gpus, total_mem, total_nodes)
     @total_cpus = total_cpus
     @total_gpus = total_gpus
-    @total_mem = total_mem
+    @total_mem = total_mem.to_f # in MB
     @total_nodes = total_nodes
   end
 
@@ -68,6 +68,9 @@ class InstanceCalculator
     end
 
     if instance_numbers[:mem] > 0
+      if nodes == 1 && instance_numbers[:compute] > 0
+        instance_numbers[:mem] = instance_numbers[:mem] + instance_numbers[:compute]
+      end
       instances << best_fit_for_type(:mem, instance_numbers[:mem], nodes)
       instances.flatten!
 
