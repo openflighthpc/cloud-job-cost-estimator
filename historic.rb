@@ -37,7 +37,7 @@ def determine_time(amount)
     seconds += amount[1].to_i * 60 # minutes
     seconds += amount[2].to_i # seconds
   end
-  (seconds / 60.0).ceil
+  (seconds / 60.0)
 end
 
 user_args = Hash[ ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/) ]
@@ -58,8 +58,9 @@ max_mem_per_core = 0.0
 mem_total = 0.0
 mem_count = 0
 cpu_count = 0
+total_time = 0.0
 over_resourced_count = 0
-under_resourced_count = 0
+excess_nodes_count = 0
 completed_jobs_count = 0
 overall_base_cost = 0.0
 overall_best_fit_cost = 0.0
@@ -71,7 +72,8 @@ file.readlines.each do |line|
 
   completed_jobs_count += 1
   time = determine_time(job.elapsed)
-  time = 1.0 if time == 0
+  total_time += time
+  time = time == 0 ? 1.0 : time.ceil
   gpus = job.reqgres.split(":")[1].to_i
 
   allocated = job.alloctres
@@ -139,7 +141,8 @@ file.readlines.each do |line|
   #puts "Can be serviced by base equivalent to #{instance_numbers}"
   #puts "Base on demand cost: $#{total_cost.ceil(2)}"
   if best_fit_instances.length > nodes
-    print "To meet requirements, extra nodes required. "
+    print "To meet requirements with identical instance types, extra nodes required. "
+    excess_nodes_count += 1
   end
   if best_fit_cost > total_cost
     print "To meet requirements, larger instance(s) required than base equivalent. "
@@ -161,8 +164,10 @@ puts "Max mem for 1 job: #{max_mem.ceil(2)}MB"
 puts "Max mem per core: #{max_mem_per_core.ceil(2)}MB"
 puts "Average mem per job: #{average_mem.ceil(2)}MB"
 puts "Average mem per cpu: #{average_mem_cpus.ceil(2)}MB"
+puts "Average time per job: #{(total_time / completed_jobs_count).ceil(2)}mins"
 puts
 puts "Overall base cost: $#{overall_base_cost.ceil(2)}"
 puts "Average cost per job: $#{(overall_base_cost / completed_jobs_count).ceil(2)}"
-puts "Overall best fit cost: $#{overall_best_fit_cost.ceil(2)}"
+puts "Overall best fit cost: $#{overall_best_fit_cost.to_f.ceil(2)}"
 puts "#{over_resourced_count} jobs requiring larger instances than base equivalent"
+puts "#{excess_nodes_count} jobs requiring more nodes than used on physical cluster"
