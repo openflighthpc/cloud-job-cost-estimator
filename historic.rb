@@ -71,6 +71,7 @@ file.readlines.each do |line|
 
   completed_jobs_count += 1
   time = determine_time(job.elapsed)
+  time = 1 if time == 0
   gpus = job.reqgres.split(":")[1].to_i
 
   allocated = job.alloctres
@@ -97,7 +98,7 @@ file.readlines.each do |line|
   mem_count += 1
   cpu_count += cpus
 
-  print "Job #{job.jobid} used #{gpus} GPUs, #{cpus}CPUs & #{mem.ceil(2)}MB on #{nodes}node(s) for #{time.ceil(2)}mins."
+  print "Job #{job.jobid} used #{gpus} GPUs, #{cpus}CPUs & #{mem.ceil(2)}MB on #{nodes} node(s) for #{time.ceil(2)}mins. "
 
   instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes)
   instance_numbers = instance_calculator.base_instance_numbers(cpus, gpus, mem)

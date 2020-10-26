@@ -7,9 +7,9 @@ class Instance
 
   def initialize(type, multiplier = 1)
     raise ArgumentError, 'Not a valid instance type' if !AWS_INSTANCES.keys.include?(type.to_sym)
-    raise ArgumentError, 'Not a valid multiplier for that type' if multiplier != 1 && !AWS_INSTANCES[type.to_sym][:multipliers].include?(multiplier)
+    raise ArgumentError, 'Not a valid multiplier for that type' if !AWS_INSTANCES[type.to_sym][:multipliers].include?(multiplier)
     @type = type.to_sym
-    @multiplier = multiplier
+    @multiplier = multiplier.to_i
     @base_cpus = AWS_INSTANCES[@type][:base][:cpus]
     @base_gpus = AWS_INSTANCES[@type][:base][:gpus]
     @base_mem = AWS_INSTANCES[@type][:base][:mem]
