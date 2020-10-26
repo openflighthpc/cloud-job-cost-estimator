@@ -40,6 +40,9 @@ def determine_time(amount)
 end
 
 user_args = Hash[ ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/) ]
+PERMITTED_STATES = user_args.key?('include-failed') ?
+  %w(FAILED CANCELLED NODE_FAIL OUT_OF_MEMORY TIMEOUT COMPLETED) :
+  %w(COMPLETED)
 
 begin
   file = File.open(user_args['input'])
@@ -69,7 +72,7 @@ file.readlines.each do |line|
   details = line.split("|")
   job = Job.new(*details)
   next if job.maxvmsize == "" # if empty, this is a job initiator, not a full job
-  next if job.state != "COMPLETED"
+  next unless PERMITTED_STATES.include?(job.state)
 
   time = determine_time(job.elapsed)
   next if time == 0
