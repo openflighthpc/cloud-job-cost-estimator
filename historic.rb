@@ -70,10 +70,12 @@ file.readlines.each do |line|
   next if job.maxvmsize == "" # if empty, this is a job initiator, not a full job
   next if job.state != "COMPLETED"
 
-  completed_jobs_count += 1
   time = determine_time(job.elapsed)
+  next if time == 0
+
+  completed_jobs_count += 1
   total_time += time
-  time = time == 0 ? 1.0 : time.ceil
+  time = time.ceil
   gpus = job.reqgres.split(":")[1].to_i
 
   allocated = job.alloctres
@@ -89,8 +91,6 @@ file.readlines.each do |line|
   max_rss = (job.maxrss[0...-1].to_f / 1000).ceil
   max_vm_size = (job.maxvmsize[0...-1].to_f / 1000).ceil
   mem = max_rss * 1.1
-  #mem = max_vm_size
-  #mem = [max_rss, max_vm_size].max
   max_mem = mem if mem > max_mem
 
   mem_per_core = (mem.to_f / cpus).ceil(2)
@@ -107,7 +107,7 @@ file.readlines.each do |line|
   best_fit_instances = instance_calculator.best_fit_instances(instance_numbers, nodes)
   total_instances = instance_numbers.values.reduce(:+)
 
-  cost_per_min = 0.0
+  cost_per_min = BigDecimal(0, 8)
   cost_per_min += instance_numbers[:gpu] * Instance::AWS_INSTANCES[:gpu][:base][:price_per_min].to_f
   cost_per_min += instance_numbers[:compute] * Instance::AWS_INSTANCES[:compute][:base][:price_per_min].to_f
   cost_per_min += instance_numbers[:mem] * Instance::AWS_INSTANCES[:mem][:base][:price_per_min].to_f
@@ -131,9 +131,7 @@ file.readlines.each do |line|
   best_fit_description = best_fit_description.join(", ")
 
   best_fit_price = 0.0
-  best_fit_instances.each do |instance| 
-    best_fit_price += instance.price_per_min
-  end
+  best_fit_instances.each { |instance| best_fit_price += instance.price_per_min }
   best_fit_cost = (best_fit_price * time)
 
   overall_best_fit_cost += best_fit_cost
@@ -160,14 +158,14 @@ puts
 average_mem = mem_total / mem_count
 average_mem_cpus = mem_total / cpu_count
 puts "Total completed jobs: #{completed_jobs_count}"
-puts "Max mem for 1 job: #{max_mem.ceil(2)}MB"
-puts "Max mem per core: #{max_mem_per_core.ceil(2)}MB"
+puts "Average time per job: #{(total_time / completed_jobs_count).ceil(2)}mins"
 puts "Average mem per job: #{average_mem.ceil(2)}MB"
 puts "Average mem per cpu: #{average_mem_cpus.ceil(2)}MB"
-puts "Average time per job: #{(total_time / completed_jobs_count).ceil(2)}mins"
+puts "Max mem for 1 job: #{max_mem.ceil(2)}MB"
+puts "Max mem per cpu: #{max_mem_per_core.ceil(2)}MB"
 puts
-puts "Overall base cost: $#{overall_base_cost.ceil(2)}"
-puts "Average cost per job: $#{(overall_base_cost / completed_jobs_count).ceil(2)}"
+puts "Overall base cost: $#{overall_base_cost.to_f.ceil(2)}"
+puts "Average cost per job: $#{(overall_base_cost / completed_jobs_count).to_f.ceil(2)}"
 puts "Overall best fit cost: $#{overall_best_fit_cost.to_f.ceil(2)}"
 puts "#{over_resourced_count} jobs requiring larger instances than base equivalent"
 puts "#{excess_nodes_count} jobs requiring more nodes than used on physical cluster"

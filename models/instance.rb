@@ -10,7 +10,7 @@ class Instance
     raise ArgumentError, 'Not a valid instance type' if !AWS_INSTANCES.keys.include?(type.to_sym)
     raise ArgumentError, 'Not a valid multiplier for that type' if !AWS_INSTANCES[type.to_sym][:multipliers].include?(multiplier)
     @type = type.to_sym
-    @multiplier = multiplier.to_i
+    @multiplier = multiplier
     @base_cpus = AWS_INSTANCES[@type][:base][:cpus]
     @base_gpus = AWS_INSTANCES[@type][:base][:gpus]
     @base_mem = AWS_INSTANCES[@type][:base][:mem]
