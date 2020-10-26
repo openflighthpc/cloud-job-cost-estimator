@@ -1,5 +1,6 @@
 require_relative './models/instance_calculator'
 require_relative './models/instance'
+require "bigdecimal"
 
 # slurm gives remaining job times in the following formats:
 # "minutes", "minutes:seconds", "hours:minutes:seconds", "days-hours",

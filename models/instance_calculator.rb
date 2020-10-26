@@ -9,6 +9,8 @@ class InstanceCalculator
     @total_nodes = total_nodes
   end
 
+  # determine how many of the 'base' versions of the three instance types are 
+  # required to meet resource needs.
   def base_instance_numbers(cpus, gpus, mem)
     instances = {gpu: 0, compute: 0, mem: 0}
     cpu_count = 0
@@ -26,35 +28,37 @@ class InstanceCalculator
         cpu_count += gpu_instance[:cpus]
         mem_count += (gpu_instance[:mem] * 1000.0) # convert GB to MB
       end
-    end
-
-    compute_instance = Instance::AWS_INSTANCES[:compute][:base]
-    mem_instance = Instance::AWS_INSTANCES[:mem][:base]
-    # If we want instances of the same type and size, all resource needs must be met by only compute or only mem instances,
-    # even if this means over resourcing. If not, we can use a combination of mem and compute nodes.
-    last_added = nil
-    while cpu_count < cpus || mem_count < mem
-      to_add = :compute
-      if last_added
-        to_add = last_added
-      else
-        # A compute instance has 2GB per 1 core. If need more than this, use a mem instance,
-        # which has 8GB per core.
-        if cpu_count < cpus
-          mem_per_cpu = (mem - mem_count) / (cpus - cpu_count)
-          to_add = mem_per_cpu > 2000 ? :mem : :compute
+    else
+      compute_instance = Instance::AWS_INSTANCES[:compute][:base]
+      mem_instance = Instance::AWS_INSTANCES[:mem][:base]
+      # All resource needs must be met by only compute or only mem instances,
+      # even if this means over resourcing.
+      last_added = nil
+      while cpu_count < cpus || mem_count < mem
+        to_add = :compute
+        if last_added
+          to_add = last_added
         else
-          to_add = :mem if mem - mem_count > 2000
+          # A compute instance has 2GB per 1 core. If need more than this, use a mem instance,
+          # which has 8GB per core.
+          if cpu_count < cpus
+            mem_per_cpu = (mem - mem_count) / (cpus - cpu_count)
+            to_add = mem_per_cpu > 2000 ? :mem : :compute
+          else
+            to_add = :mem if mem - mem_count > 2000
+          end
         end
+        instances[to_add] = instances[to_add] += 1
+        cpu_count += Instance::AWS_INSTANCES[to_add][:base][:cpus]
+        mem_count += Instance::AWS_INSTANCES[to_add][:base][:mem] * 1000 # GB to MB
+        last_added = to_add
       end
-      instances[to_add] = instances[to_add] += 1
-      cpu_count += Instance::AWS_INSTANCES[to_add][:base][:cpus]
-      mem_count += Instance::AWS_INSTANCES[to_add][:base][:mem] * 1000 # GB to MB
-      last_added = to_add
     end
     instances
   end
 
+  # Using number of 'base' instances needed, determine
+  # best size and number of instances.
   def best_fit_instances(instance_numbers, nodes)
     instances = []
     total_instances = instance_numbers.values.reduce(:+)
@@ -67,17 +71,14 @@ class InstanceCalculator
       return instances
     end
 
-    if instance_numbers[:gpu] > 0
-      instances << best_fit_for_type(:gpu, instance_numbers[:gpu], nodes)
-      instances.flatten!
-    elsif instance_numbers[:mem] > 0
-      instances << best_fit_for_type(:mem, instance_numbers[:mem], nodes)
-      instances.flatten!
-    elsif instance_numbers[:compute] > 0
-      instances << best_fit_for_type(:compute, instance_numbers[:compute], nodes)
-      instances.flatten!
+    type = nil
+    instance_numbers.each do |k, v|
+      if v > 0
+        type = k
+        break
+      end
     end
-    instances
+    instances = best_fit_for_type(type, instance_numbers[type], nodes)
   end
 
   def best_fit_for_type(type, target, nodes)
