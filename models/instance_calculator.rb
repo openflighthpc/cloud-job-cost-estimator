@@ -83,7 +83,6 @@ class InstanceCalculator
 
   def best_fit_for_type(type, target, nodes)
     original_nodes = nodes.clone
-    instances = []
     count = 0.0
     multipliers = Instance::AWS_INSTANCES[type][:multipliers].sort
     # If 1 node specified, job may not be parallelizable so try to match this as much as possible,
@@ -101,32 +100,38 @@ class InstanceCalculator
       # if needs less than that of base
       best_fit = multipliers.first if per_node < multipliers.first
       count += best_fit
-      # if can't meet needs in one node, increase node count by one and try again
-      return best_fit_for_type(type, target, 2) if count < target
+      
+      # if can't meet needs in one node, increase node count by one and continue
+      if count < target
+        nodes = 2
+        count = 0.0
+      else
+        return [Instance.new(type, best_fit.to_i)]
+      end
+    end
+    
+    instances = []
+    last_added = nil
+    while count < target || nodes > 0
+      best_fit = nil
+      if last_added
+        best_fit = last_added
+      else
+        per_node = (target - count) / nodes
+        if multipliers.include?(per_node)
+          best_fit = per_node
+        elsif per_node < multipliers.first
+          best_fit = multipliers.first
+        else
+          nodes += 1
+          next
+        end
+      end
 
       instances << Instance.new(type, best_fit.to_i)
-    else
-      last_added = nil
-      while count < target || nodes > 0
-        best_fit = nil
-        if last_added
-          best_fit = last_added
-        else
-          per_node = (target - count) / nodes
-          if multipliers.include?(per_node)
-            best_fit = per_node
-          elsif per_node < multipliers.first
-            best_fit = multipliers.first
-          else
-            return best_fit_for_type(type, target, (original_nodes + 1))
-          end
-        end
-        
-        instances << Instance.new(type, best_fit.to_i)
-        last_added = best_fit
-        count += best_fit
-        nodes -= 1
-      end
+      last_added = best_fit
+      count += best_fit
+      nodes -= 1
     end
     instances
   end
