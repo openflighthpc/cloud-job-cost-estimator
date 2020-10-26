@@ -68,6 +68,11 @@ class InstanceCalculator
     end
 
     if instance_numbers[:mem] > 0
+      # If we only have one node left to use and there are also compute instances to add,
+      # fold these into the mem count, so we can get 1 node that meets all total resource needs.
+      if nodes == 1 && instance_numbers[:compute] > 0
+        instance_numbers[:mem] = instance_numbers[:mem] + instance_numbers[:compute]
+      end
       instances << best_fit_for_type(:mem, instance_numbers[:mem], nodes)
       instances.flatten!
 
@@ -84,6 +89,7 @@ class InstanceCalculator
   end
 
   def best_fit_for_type(type, target, nodes)
+    original_nodes = nodes.clone
     instances = []
     count = 0
     multipliers = Instance::AWS_INSTANCES[type][:multipliers]
@@ -101,6 +107,11 @@ class InstanceCalculator
       count += best_fit
       nodes -= 1
     end
+    
+    # if can't meet needs in number of nodes, increase node count by one and try again
+    if count < target
+      return best_fit_for_type(type, target, (original_nodes + 1))
+    end
     instances
   end
 
@@ -108,8 +119,8 @@ class InstanceCalculator
     new_total_mem = 0.0
     new_total_cpus = 0
     instances.each do |i|
-      new_total_mem = i.mem * 1000
-      new_total_cpus = i.cpus
+      new_total_mem += (i.mem * 1000)
+      new_total_cpus += i.cpus
     end
     required_mem = [(@total_mem - new_total_mem), 0.0].max
     required_cpus = [(@total_cpus - new_total_cpus), 0].max
