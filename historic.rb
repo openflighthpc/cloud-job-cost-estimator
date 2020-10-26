@@ -71,7 +71,7 @@ file.readlines.each do |line|
 
   completed_jobs_count += 1
   time = determine_time(job.elapsed)
-  time = 1 if time == 0
+  time = 1.0 if time == 0
   gpus = job.reqgres.split(":")[1].to_i
 
   allocated = job.alloctres
@@ -106,9 +106,9 @@ file.readlines.each do |line|
   total_instances = instance_numbers.values.reduce(:+)
 
   cost_per_min = 0.0
-  cost_per_min += instance_numbers[:gpu] * Instance::AWS_INSTANCES[:gpu][:base][:price_per_min]
-  cost_per_min += instance_numbers[:compute] * Instance::AWS_INSTANCES[:compute][:base][:price_per_min]
-  cost_per_min += instance_numbers[:mem] * Instance::AWS_INSTANCES[:mem][:base][:price_per_min]
+  cost_per_min += instance_numbers[:gpu] * Instance::AWS_INSTANCES[:gpu][:base][:price_per_min].to_f
+  cost_per_min += instance_numbers[:compute] * Instance::AWS_INSTANCES[:compute][:base][:price_per_min].to_f
+  cost_per_min += instance_numbers[:mem] * Instance::AWS_INSTANCES[:mem][:base][:price_per_min].to_f
   total_cost = (cost_per_min * time)
 
   overall_base_cost += total_cost
@@ -129,7 +129,9 @@ file.readlines.each do |line|
   best_fit_description = best_fit_description.join(", ")
 
   best_fit_price = 0.0
-  best_fit_instances.each { |instance| best_fit_price += instance.price_per_min }
+  best_fit_instances.each do |instance| 
+    best_fit_price += instance.price_per_min
+  end
   best_fit_cost = (best_fit_price * time)
 
   overall_best_fit_cost += best_fit_cost
@@ -137,13 +139,13 @@ file.readlines.each do |line|
   #puts "Can be serviced by base equivalent to #{instance_numbers}"
   #puts "Base on demand cost: $#{total_cost.ceil(2)}"
   if best_fit_instances.length > nodes
-    print " To meet requirements, extra nodes required."
+    print "To meet requirements, extra nodes required. "
   end
-  if best_fit_cost.ceil(2) > total_cost.ceil(2)
-    print " To meet requirements, larger instance(s) required than base equivalent."
+  if best_fit_cost > total_cost
+    print "To meet requirements, larger instance(s) required than base equivalent. "
     over_resourced_count += 1
   end
-  print " Instance config of #{best_fit_description} would cost $#{best_fit_cost.ceil(2)}."
+  print "Instance config of #{best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
   puts
   puts
 end

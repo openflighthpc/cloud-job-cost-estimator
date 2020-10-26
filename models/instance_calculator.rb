@@ -176,11 +176,6 @@ class InstanceCalculator
     if count < target
       return best_fit_for_type(type, target, (original_nodes + 1))
     end
-    
-    # if can't meet needs in number of nodes, increase node count by one and try again
-    if count < target
-      return best_fit_for_type(type, target, (original_nodes + 1))
-    end
     instances
   end
 

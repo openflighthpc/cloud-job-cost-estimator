@@ -1,4 +1,5 @@
 require 'yaml'
+require "bigdecimal"
 
 class Instance
   attr_reader :type
@@ -13,7 +14,7 @@ class Instance
     @base_cpus = AWS_INSTANCES[@type][:base][:cpus]
     @base_gpus = AWS_INSTANCES[@type][:base][:gpus]
     @base_mem = AWS_INSTANCES[@type][:base][:mem]
-    @base_price_per_min = AWS_INSTANCES[@type][:base][:price_per_min]
+    @base_price_per_min = BigDecimal(AWS_INSTANCES[@type][:base][:price_per_min], 8)
     @base_name = AWS_INSTANCES[@type][:base][:name]
   end
 
