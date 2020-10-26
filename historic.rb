@@ -50,6 +50,11 @@ rescue TypeError
   puts 'Please specify an input file.'
   exit 1
 end
+
+# initalise hash with one key per permitted state
+# each having an empty array as the value
+states = Hash[PERMITTED_STATES.collect { |x| [x, [] ] } ]
+
 header = file.first.chomp
 cols = header.split('|')
 cols.map! { |col| col.downcase.to_sym }
@@ -104,7 +109,7 @@ file.readlines.each do |line|
   mem_count += 1
   cpu_count += cpus
 
-  print "Job #{job.jobid} used #{gpus} GPUs, #{cpus}CPUs & #{mem.ceil(2)}MB on #{nodes} node(s) for #{time.ceil(2)}mins. "
+  msg = "Job #{job.jobid} used #{gpus} GPUs, #{cpus}CPUs & #{mem.ceil(2)}MB on #{nodes} node(s) for #{time.ceil(2)}mins. "
 
   instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes, time, include_any_node_numbers)
   base_cost = instance_calculator.total_base_cost
@@ -113,29 +118,38 @@ file.readlines.each do |line|
   overall_best_fit_cost += best_fit_cost
 
   if instance_calculator.best_fit_count > nodes
-    print "To meet requirements with identical instance types, extra nodes required. "
+    msg << "To meet requirements with identical instance types, extra nodes required. "
     excess_nodes_count += 1
   end
   if best_fit_cost > base_cost
-    print "To match number of nodes, larger instance(s) than job resources require must be used. "
+    msg << "To match number of nodes, larger instance(s) than job resources require must be used. "
     over_resourced_count += 1
   end
-  print "Instance config of #{instance_calculator.best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
+  msg << "Instance config of #{instance_calculator.best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
   
   if include_any_node_numbers
     any_nodes_cost = instance_calculator.total_any_nodes_cost
     overall_any_nodes_cost += any_nodes_cost
     if instance_calculator.any_nodes_is_different?
       any_nodes_cost_diff = instance_calculator.any_nodes_best_fit_cost_diff
-      print " Ignoring node counts, best fit would be #{instance_calculator.any_nodes_description}"
-      print " at a cost of $#{any_nodes_cost.to_f.ceil(2)}"
-      print any_nodes_cost_diff == 0 ? " (same cost)" : " (-$#{any_nodes_cost_diff.to_f.ceil(3)})"
-      print "."
+      msg << " Ignoring node counts, best fit would be #{instance_calculator.any_nodes_description}"
+      msg << " at a cost of $#{any_nodes_cost.to_f.ceil(2)}"
+      msg << any_nodes_cost_diff == 0 ? " (same cost)" : " (-$#{any_nodes_cost_diff.to_f.ceil(3)})"
+      msg << "."
     end
   end
+  puts
+  puts
 
-  puts
-  puts
+  states[job.state] << msg
+end
+
+states.each do |state, jobs|
+  next if !jobs.any?
+  puts state
+  puts "-" * 50 + "\n"
+  puts jobs
+  puts "\n"
 end
 
 puts "-" * 50
