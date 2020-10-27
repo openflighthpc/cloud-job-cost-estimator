@@ -156,8 +156,13 @@ puts
 
 average_mem = mem_total / mem_count
 average_mem_cpus = mem_total / cpu_count
-puts "Total completed jobs: #{completed_jobs_count}"
+states.each do |state, jobs|
+  next if !jobs.any?
+  puts "#{state.capitalize.gsub('_', ' ')} jobs processed: #{jobs.count}"
+end
+puts "Total jobs processed: #{completed_jobs_count}"
 puts "Average time per job: #{(total_time / completed_jobs_count).ceil(2)}mins"
+puts
 puts "Average mem per job: #{average_mem.ceil(2)}MB"
 puts "Average mem per cpu: #{average_mem_cpus.ceil(2)}MB"
 puts "Max mem for 1 job: #{max_mem.ceil(2)}MB"
