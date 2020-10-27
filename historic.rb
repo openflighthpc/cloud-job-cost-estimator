@@ -91,7 +91,7 @@ file.readlines.each do |line|
   time = determine_time(job.elapsed)
   next if time == 0
 
-  include_ignore_nodes = user_args.key?('include-ignore-nodes')
+  include_any_node_numbers = user_args.key?('include-any-node-numbers')
 
   completed_jobs_count += 1
   total_time += time
@@ -153,11 +153,11 @@ file.readlines.each do |line|
   end
   print "Instance config of #{best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
   
-  if include_ignore_nodes
-    ignore_nodes_instances = instance_calculator.best_fit_instances(instance_numbers, nodes, false)
-    ignore_nodes_description = describe_grouped_instances(ignore_nodes_instances)
-    if ignore_nodes_description != best_fit_description
-      print " Ignoring node counts, best fit would be #{ignore_nodes_description}"
+  if include_any_node_numbers
+    any_nodes_instances = instance_calculator.best_fit_instances(instance_numbers, nodes, false)
+    any_nodes_description = describe_grouped_instances(any_nodes_instances)
+    if any_nodes_description != best_fit_description
+      print " Ignoring node counts, best fit would be #{any_nodes_description}"
       print " at a cost of $#{base_cost.to_f.ceil(2)}"
       print " (same cost)" if base_cost == best_fit_cost
       print " (-$#{(best_fit_cost - base_cost).to_f.ceil(3)})" if base_cost != best_fit_cost
