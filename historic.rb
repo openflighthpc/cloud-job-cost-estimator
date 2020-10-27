@@ -41,23 +41,6 @@ def determine_time(amount)
   (seconds / 60.0)
 end
 
-def describe_grouped_instances(instances)
-  grouped = {}
-  instances.each do |instance|
-    if grouped.has_key?(instance.name)
-      grouped[instance.name] = grouped[instance.name] + 1
-    else
-      grouped[instance.name] = 1
-    end
-  end
-
-  description = []
-  grouped.each do |k, v|
-    description << "#{v} #{k}"
-  end
-  description.join(", ")
-end
-
 user_args = Hash[ ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/) ]
 
 begin
@@ -125,7 +108,8 @@ file.readlines.each do |line|
   instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes)
   instance_numbers = instance_calculator.base_instance_numbers(cpus, gpus, mem)
   best_fit_instances = instance_calculator.best_fit_instances(instance_numbers, nodes)
-  total_instances = instance_numbers.values.reduce(:+)
+  best_fit_type = best_fit_instances.first.name
+  best_fit_number = best_fit_instances.length
 
   cost_per_min = BigDecimal(0, 8)
   cost_per_min += instance_numbers[:gpu] * BigDecimal(Instance::AWS_INSTANCES[:gpu][:base][:price_per_min], 8)
@@ -135,15 +119,12 @@ file.readlines.each do |line|
 
   overall_base_cost += base_cost
 
-  best_fit_description = describe_grouped_instances(best_fit_instances)
-  
-  best_fit_price = BigDecimal(0, 8)
-  best_fit_instances.each { |instance| best_fit_price += instance.price_per_min }
+  best_fit_price = best_fit_instances.first.price_per_min * best_fit_number
   best_fit_cost = (best_fit_price * time)
 
   overall_best_fit_cost += best_fit_cost
 
-  if best_fit_instances.length > nodes
+  if best_fit_number > nodes
     print "To meet requirements with identical instance types, extra nodes required. "
     excess_nodes_count += 1
   end
@@ -151,11 +132,12 @@ file.readlines.each do |line|
     print "To meet requirements, larger instance(s) required than base equivalent. "
     over_resourced_count += 1
   end
+  best_fit_description = "#{best_fit_number} #{best_fit_type}"
   print "Instance config of #{best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
   
   if include_any_node_numbers
     any_nodes_instances = instance_calculator.best_fit_instances(instance_numbers, nodes, false)
-    any_nodes_description = describe_grouped_instances(any_nodes_instances)
+    any_nodes_description = "#{any_nodes_instances.length} #{any_nodes_instances.first.name}"
     if any_nodes_description != best_fit_description
       print " Ignoring node counts, best fit would be #{any_nodes_description}"
       print " at a cost of $#{base_cost.to_f.ceil(2)}"
