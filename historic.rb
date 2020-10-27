@@ -41,6 +41,23 @@ def determine_time(amount)
   (seconds / 60.0)
 end
 
+def describe_grouped_instances(instances)
+  grouped = {}
+  instances.each do |instance|
+    if grouped.has_key?(instance.name)
+      grouped[instance.name] = grouped[instance.name] + 1
+    else
+      grouped[instance.name] = 1
+    end
+  end
+
+  description = []
+  grouped.each do |k, v|
+    description << "#{v} #{k}"
+  end
+  description.join(", ")
+end
+
 user_args = Hash[ ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/) ]
 
 begin
@@ -73,6 +90,8 @@ file.readlines.each do |line|
 
   time = determine_time(job.elapsed)
   next if time == 0
+
+  include_ignore_nodes = user_args.key?('include-ignore-nodes')
 
   completed_jobs_count += 1
   total_time += time
@@ -109,45 +128,43 @@ file.readlines.each do |line|
   total_instances = instance_numbers.values.reduce(:+)
 
   cost_per_min = BigDecimal(0, 8)
-  cost_per_min += instance_numbers[:gpu] * Instance::AWS_INSTANCES[:gpu][:base][:price_per_min].to_f
-  cost_per_min += instance_numbers[:compute] * Instance::AWS_INSTANCES[:compute][:base][:price_per_min].to_f
-  cost_per_min += instance_numbers[:mem] * Instance::AWS_INSTANCES[:mem][:base][:price_per_min].to_f
-  total_cost = (cost_per_min * time)
+  cost_per_min += instance_numbers[:gpu] * BigDecimal(Instance::AWS_INSTANCES[:gpu][:base][:price_per_min], 8)
+  cost_per_min += instance_numbers[:compute] * BigDecimal(Instance::AWS_INSTANCES[:compute][:base][:price_per_min], 8)
+  cost_per_min += instance_numbers[:mem] * BigDecimal(Instance::AWS_INSTANCES[:mem][:base][:price_per_min], 8)
+  base_cost = (cost_per_min * time)
 
-  overall_base_cost += total_cost
+  overall_base_cost += base_cost
 
-  best_fit_grouped = {}
-  best_fit_instances.each do |instance|
-    if best_fit_grouped.has_key?(instance.name)
-      best_fit_grouped[instance.name] = best_fit_grouped[instance.name] + 1
-    else
-      best_fit_grouped[instance.name] = 1
-    end
-  end
-
-  best_fit_description = []
-  best_fit_grouped.each do |k, v|
-    best_fit_description << "#{v} #{k}"
-  end
-  best_fit_description = best_fit_description.join(", ")
-
-  best_fit_price = 0.0
+  best_fit_description = describe_grouped_instances(best_fit_instances)
+  
+  best_fit_price = BigDecimal(0, 8)
   best_fit_instances.each { |instance| best_fit_price += instance.price_per_min }
   best_fit_cost = (best_fit_price * time)
 
   overall_best_fit_cost += best_fit_cost
 
-  #puts "Can be serviced by base equivalent to #{instance_numbers}"
-  #puts "Base on demand cost: $#{total_cost.ceil(2)}"
   if best_fit_instances.length > nodes
     print "To meet requirements with identical instance types, extra nodes required. "
     excess_nodes_count += 1
   end
-  if best_fit_cost > total_cost
+  if best_fit_cost > base_cost
     print "To meet requirements, larger instance(s) required than base equivalent. "
     over_resourced_count += 1
   end
   print "Instance config of #{best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
+  
+  if include_ignore_nodes
+    ignore_nodes_instances = instance_calculator.best_fit_instances(instance_numbers, nodes, false)
+    ignore_nodes_description = describe_grouped_instances(ignore_nodes_instances)
+    if ignore_nodes_description != best_fit_description
+      print " Ignoring node counts, best fit would be #{ignore_nodes_description}"
+      print " at a cost of $#{base_cost.to_f.ceil(2)}"
+      print " (same cost)" if base_cost == best_fit_cost
+      print " (-$#{(best_fit_cost - base_cost).to_f.ceil(3)})" if base_cost != best_fit_cost
+      print "."
+    end
+  end
+
   puts
   puts
 end
@@ -165,8 +182,9 @@ puts "Average mem per cpu: #{average_mem_cpus.ceil(2)}MB"
 puts "Max mem for 1 job: #{max_mem.ceil(2)}MB"
 puts "Max mem per cpu: #{max_mem_per_core.ceil(2)}MB"
 puts
-puts "Overall base cost: $#{overall_base_cost.to_f.ceil(2)}"
-puts "Average cost per job: $#{(overall_base_cost / completed_jobs_count).to_f.ceil(2)}"
+puts "Overall base cost (ignoring node counts): $#{overall_base_cost.to_f.ceil(2)}"
+puts "Average base cost per job: $#{(overall_base_cost / completed_jobs_count).to_f.ceil(2)}"
 puts "Overall best fit cost: $#{overall_best_fit_cost.to_f.ceil(2)}"
+puts "Average best fit cost per job: $#{(overall_best_fit_cost / completed_jobs_count).to_f.ceil(2)}"
 puts "#{over_resourced_count} jobs requiring larger instances than base equivalent"
 puts "#{excess_nodes_count} jobs requiring more nodes than used on physical cluster"
