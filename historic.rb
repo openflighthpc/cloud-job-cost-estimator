@@ -77,7 +77,7 @@ file.readlines.each do |line|
   details = line.split("|")
   job = Job.new(*details)
   next if job.maxvmsize == "" # if empty, this is a job initiator, not a full job
-  next unless PERMITTED_STATES.include?(job.state)
+  next unless states.key?(job.state)
 
   time = determine_time(job.elapsed)
   next if time == 0
@@ -138,8 +138,6 @@ file.readlines.each do |line|
       msg << "."
     end
   end
-  puts
-  puts
 
   states[job.state] << msg
 end
@@ -147,9 +145,9 @@ end
 states.each do |state, jobs|
   next if !jobs.any?
   puts state
-  puts "-" * 50 + "\n"
+  puts "#{'-'*50}\n"
   puts jobs
-  puts "\n"
+  puts
 end
 
 puts "-" * 50
