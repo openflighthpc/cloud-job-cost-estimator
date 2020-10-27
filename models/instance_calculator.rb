@@ -82,12 +82,11 @@ class InstanceCalculator
   end
 
   def best_fit_for_type(type, target, nodes, consider_nodes=true)
-    nodes = 1 if !consider_nodes
-    original_nodes = nodes.clone
+    nodes = 1 if !consider_nodes # if ignoring actual nodes, start with fewest possible and work up
     count = 0.0
     multipliers = Instance::AWS_INSTANCES[type][:multipliers].sort
-    # If 1 node specified, job may not be parallelizable so try to match this as much as possible,
-    # giving this priority over providing exactly fitting multiple nodes of equal size.
+    # Unless ignoring node counts, if 1 node specified job may not be parallelizable so try to match this as
+    # much as possible, giving this priority over providing exactly fitting multiple nodes of equal size.
     if nodes == 1 && consider_nodes
       best_fit = nil
       per_node = (target - count)
