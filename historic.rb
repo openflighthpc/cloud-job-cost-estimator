@@ -1,6 +1,7 @@
 require_relative './models/instance_calculator'
 require_relative './models/instance'
 require "bigdecimal"
+require 'csv'
 
 # slurm gives job times in the following formats:
 # "minutes", "minutes:seconds", "hours:minutes:seconds", "days-hours",
@@ -46,6 +47,14 @@ begin
 rescue TypeError
   puts 'Please specify an input file.'
   exit 1
+end
+
+output = user_args['output']
+if output
+  csv_headers = %w[job_id state gpus cpus max_rss_mb num_nodes elapsed_mins suggested_num suggested_type suggested_cost]
+  CSV.open(output, "wb") do |csv|
+    csv << csv_headers
+  end
 end
 header = file.first.chomp
 cols = header.split('|')
@@ -133,6 +142,13 @@ file.readlines.each do |line|
 
   puts
   puts
+
+  if output
+    CSV.open(output, "ab") do |csv|
+      type = best_fit_instances.first.name
+      csv << ["'#{job.jobid}", job.state, gpus, cpus, mem.ceil(4), nodes, time, best_fit_grouped[type], type, best_fit_cost.to_f]
+    end
+  end
 end
 
 puts "-" * 50
