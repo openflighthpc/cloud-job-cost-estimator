@@ -1,4 +1,5 @@
 require 'yaml'
+require "bigdecimal"
 
 class Instance
   attr_reader :type
@@ -7,13 +8,13 @@ class Instance
 
   def initialize(type, multiplier = 1)
     raise ArgumentError, 'Not a valid instance type' if !AWS_INSTANCES.keys.include?(type.to_sym)
-    raise ArgumentError, 'Not a valid multiplier for that type' if multiplier != 1 && !AWS_INSTANCES[type.to_sym][:multipliers].include?(multiplier)
+    raise ArgumentError, 'Not a valid multiplier for that type' if !AWS_INSTANCES[type.to_sym][:multipliers].include?(multiplier)
     @type = type.to_sym
     @multiplier = multiplier
     @base_cpus = AWS_INSTANCES[@type][:base][:cpus]
     @base_gpus = AWS_INSTANCES[@type][:base][:gpus]
     @base_mem = AWS_INSTANCES[@type][:base][:mem]
-    @base_price_per_min = AWS_INSTANCES[@type][:base][:price_per_min]
+    @base_price_per_min = BigDecimal(AWS_INSTANCES[@type][:base][:price_per_min], 8)
     @base_name = AWS_INSTANCES[@type][:base][:name]
   end
 
