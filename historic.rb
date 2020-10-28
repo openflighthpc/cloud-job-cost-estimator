@@ -70,7 +70,6 @@ mem_count = 0
 cpu_count = 0
 over_resourced_count = 0
 excess_nodes_count = 0
-completed_jobs_count = 0
 overall_any_nodes_cost = 0.0
 overall_best_fit_cost = 0.0
 file.readlines.each do |line|
@@ -82,7 +81,6 @@ file.readlines.each do |line|
   time = determine_time(job.elapsed)
   next if time == 0
 
-  completed_jobs_count += 1
   state_times[job.state] += time
   time = time.ceil
   gpus = job.reqgres.split(":")[1].to_i
@@ -155,6 +153,7 @@ puts "Totals"
 puts
 
 total_time = state_times.values.sum
+total_jobs_count = states.values.flatten.count
 
 average_mem = mem_total / mem_count
 average_mem_cpus = mem_total / cpu_count
@@ -163,8 +162,8 @@ states.each do |state, jobs|
   avg_time = 
     puts "#{state.capitalize.gsub('_', ' ')} jobs processed: #{jobs.count} (avg time per: #{(state_times[state] / jobs.length).ceil(2)}mins)"
 end
-puts "Total jobs processed: #{completed_jobs_count}"
-puts "Average time per job: #{(total_time / completed_jobs_count).ceil(2)}mins"
+puts "Total jobs processed: #{total_jobs_count}"
+puts "Average time per job: #{(total_time / total_jobs_count).ceil(2)}mins"
 puts
 puts "Average mem per job: #{average_mem.ceil(2)}MB"
 puts "Average mem per cpu: #{average_mem_cpus.ceil(2)}MB"
@@ -172,8 +171,13 @@ puts "Max mem for 1 job: #{max_mem.ceil(2)}MB"
 puts "Max mem per cpu: #{max_mem_per_cpu.ceil(2)}MB"
 puts
 if include_any_node_numbers
+<<<<<<< HEAD
   puts "Overall cost ignoring node counts: $#{overall_any_nodes_cost.to_f.ceil(2)}"
   puts "Average cost per job ignoring node counts: $#{(overall_any_nodes_cost / completed_jobs_count).to_f.ceil(2)}"
+=======
+  puts "Overall base cost (ignoring node counts): $#{overall_base_cost.to_f.ceil(2)}"
+  puts "Average base cost per job: $#{(overall_base_cost / total_jobs_count).to_f.ceil(2)}"
+>>>>>>> 5d4c39b... Change total jobs variable calculation
 end
 puts "Overall best fit cost: $#{overall_best_fit_cost.to_f.ceil(2)}"
 puts "Average best fit cost per job: $#{(overall_best_fit_cost / completed_jobs_count).to_f.ceil(2)}"
