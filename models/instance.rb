@@ -30,7 +30,7 @@ class Instance
     @base_mem * @multiplier # in GB
   end
 
-  def price_per_min
+  def cost_per_min
     @base_price_per_min * @multiplier
   end
 

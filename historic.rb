@@ -106,16 +106,10 @@ file.readlines.each do |line|
   print "Job #{job.jobid} used #{gpus} GPUs, #{cpus}CPUs & #{mem.ceil(2)}MB on #{nodes} node(s) for #{time.ceil(2)}mins. "
 
   instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes)
-  instance_numbers = instance_calculator.base_instance_numbers(cpus, gpus, mem)
+  base_cost = instance_calculator.base_cost_per_min * time
   best_fit_instances = instance_calculator.best_fit_instances(instance_numbers, nodes)
   best_fit_type = best_fit_instances.first.name
   best_fit_number = best_fit_instances.length
-
-  cost_per_min = BigDecimal(0, 8)
-  cost_per_min += instance_numbers[:gpu] * BigDecimal(Instance::AWS_INSTANCES[:gpu][:base][:price_per_min], 8)
-  cost_per_min += instance_numbers[:compute] * BigDecimal(Instance::AWS_INSTANCES[:compute][:base][:price_per_min], 8)
-  cost_per_min += instance_numbers[:mem] * BigDecimal(Instance::AWS_INSTANCES[:mem][:base][:price_per_min], 8)
-  base_cost = (cost_per_min * time)
 
   overall_base_cost += base_cost
 
@@ -135,17 +129,17 @@ file.readlines.each do |line|
   best_fit_description = "#{best_fit_number} #{best_fit_type}"
   print "Instance config of #{best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
   
-  if include_any_node_numbers
-    any_nodes_instances = instance_calculator.best_fit_instances(instance_numbers, nodes, false)
-    any_nodes_description = "#{any_nodes_instances.length} #{any_nodes_instances.first.name}"
-    if any_nodes_description != best_fit_description
-      print " Ignoring node counts, best fit would be #{any_nodes_description}"
-      print " at a cost of $#{base_cost.to_f.ceil(2)}"
-      print " (same cost)" if base_cost == best_fit_cost
-      print " (-$#{(best_fit_cost - base_cost).to_f.ceil(3)})" if base_cost != best_fit_cost
-      print "."
-    end
-  end
+  # if include_any_node_numbers
+  #   any_nodes_instances = instance_calculator.best_fit_instances(instance_numbers, nodes, false)
+  #   any_nodes_description = "#{any_nodes_instances.length} #{any_nodes_instances.first.name}"
+  #   if any_nodes_description != best_fit_description
+  #     print " Ignoring node counts, best fit would be #{any_nodes_description}"
+  #     print " at a cost of $#{base_cost.to_f.ceil(2)}"
+  #     print " (same cost)" if base_cost == best_fit_cost
+  #     print " (-$#{(best_fit_cost - base_cost).to_f.ceil(3)})" if base_cost != best_fit_cost
+  #     print "."
+  #   end
+  # end
 
   puts
   puts

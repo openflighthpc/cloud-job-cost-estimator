@@ -1,60 +1,51 @@
+require "bigdecimal"
 require_relative 'instance'
 
 class InstanceCalculator
+  attr_reader :base_instance
+  attr_reader :base_instance_count
 
   def initialize(total_cpus, total_gpus, total_mem, total_nodes)
     @total_cpus = total_cpus
     @total_gpus = total_gpus
     @total_mem = total_mem.to_f # in MB
     @total_nodes = total_nodes
+    calculate_base_instance_numbers
   end
 
-  # determine how many of the 'base' versions of the three instance types are 
-  # required to meet resource needs.
-  def base_instance_numbers(cpus, gpus, mem)
-    instances = {gpu: 0, compute: 0, mem: 0}
+  # determine which of the three instance types is most appropriate
+  # and how many of the 'base' (smallest) instance are required
+  def calculate_base_instance_numbers
+    return if @base_instance
+
+    @base_instance = nil
+    @base_instance_count = 0
+    gpu_count = 0
     cpu_count = 0
     mem_count = 0
+
     # gpus are priority, as can only be given by gpu instances.
     # Additionally, gpu instances have high core counts and memory.
-    if gpus > 0
-      gpu_instance = Instance::AWS_INSTANCES[:gpu][:base]
-      gpu_count = 0
-      # If we want instances of the same type and size, all resource needs must be met by GPU instances,
-      # even if this involves over resourcing
-      while gpu_count < gpus || cpu_count < cpus || mem_count < mem
-        instances[:gpu] += 1
-        gpu_count += gpu_instance[:gpus]
-        cpu_count += gpu_instance[:cpus]
-        mem_count += (gpu_instance[:mem] * 1000.0) # convert GB to MB
-      end
+    if @total_gpus > 0
+      @base_instance = Instance.new(:gpu) 
     else
-      compute_instance = Instance::AWS_INSTANCES[:compute][:base]
-      mem_instance = Instance::AWS_INSTANCES[:mem][:base]
-      # All resource needs must be met by only compute or only mem instances,
-      # even if this means over resourcing.
-      last_added = nil
-      while cpu_count < cpus || mem_count < mem
-        to_add = :compute
-        if last_added
-          to_add = last_added
-        else
-          # A compute instance has 2GB per 1 core. If need more than this, use a mem instance,
-          # which has 8GB per core.
-          if cpu_count < cpus
-            mem_per_cpu = (mem - mem_count) / (cpus - cpu_count)
-            to_add = mem_per_cpu > 2000 ? :mem : :compute
-          else
-            to_add = :mem if mem - mem_count > 2000
-          end
-        end
-        instances[to_add] = instances[to_add] += 1
-        cpu_count += Instance::AWS_INSTANCES[to_add][:base][:cpus]
-        mem_count += Instance::AWS_INSTANCES[to_add][:base][:mem] * 1000 # GB to MB
-        last_added = to_add
-      end
+      # A compute instance has 2GB per 1 core. If need more than this, use a mem instance,
+      # which has 8GB per cpu.
+      mem_per_cpu = @total_mem / @total_cpus
+      base_instance_type = mem_per_cpu > 2000 ? :mem : :compute
+      @base_instance = Instance.new(base_instance_type)
     end
-    instances
+
+    while gpu_count < @total_gpus || cpu_count < @total_cpus || mem_count < @total_mem
+      @base_instance_count += 1
+      gpu_count += @base_instance.gpus
+      cpu_count += @base_instance.cpus
+      mem_count += @base_instance.mem * 1000 # convert GB to MB
+    end
+  end
+
+  def base_cost_per_min
+    @base_instance.cost_per_min * @base_instance_count
   end
 
   # Using number of 'base' instances needed, determine
