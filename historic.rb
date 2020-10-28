@@ -51,11 +51,13 @@ end
 
 output = user_args['output']
 if output
-  csv_headers = %w[job_id state gpus cpus max_rss_mb num_nodes elapsed_mins suggested_num suggested_type suggested_cost]
+  csv_headers = %w[job_id state gpus cpus base_max_rss_mb adjusted_max_rss_mb 
+                   num_nodes elapsed_mins suggested_num suggested_type suggested_cost_usd]
   CSV.open(output, "wb") do |csv|
     csv << csv_headers
   end
 end
+
 header = file.first.chomp
 cols = header.split('|')
 cols.map! { |col| col.downcase.to_sym }
@@ -98,7 +100,7 @@ file.readlines.each do |line|
   cpus = allocated_details["cpu"].to_i
   nodes = allocated_details["node"].to_i
 
-  max_rss = (job.maxrss[0...-1].to_f / 1000).ceil
+  max_rss = (job.maxrss[0...-1].to_f / 1000)
   max_vm_size = (job.maxvmsize[0...-1].to_f / 1000).ceil
   mem = max_rss * 1.1
   max_mem = mem if mem > max_mem
@@ -146,7 +148,7 @@ file.readlines.each do |line|
   if output
     CSV.open(output, "ab") do |csv|
       type = best_fit_instances.first.name
-      csv << ["'#{job.jobid}", job.state, gpus, cpus, mem.ceil(4), nodes, time, best_fit_grouped[type], type, best_fit_cost.to_f]
+      csv << ["'#{job.jobid}", job.state, gpus, cpus, max_rss, mem.ceil(2), nodes, time, best_fit_grouped[type], type, best_fit_cost.to_f]
     end
   end
 end
