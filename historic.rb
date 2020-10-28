@@ -2,7 +2,7 @@ require_relative './models/instance_calculator'
 require_relative './models/instance'
 require "bigdecimal"
 
-# slurm gives remaining job times in the following formats:
+# slurm gives job times in the following formats:
 # "minutes", "minutes:seconds", "hours:minutes:seconds", "days-hours",
 # "days-hours:minutes" and "days-hours:minutes:seconds".
 def determine_time(amount)
@@ -105,20 +105,14 @@ file.readlines.each do |line|
 
   print "Job #{job.jobid} used #{gpus} GPUs, #{cpus}CPUs & #{mem.ceil(2)}MB on #{nodes} node(s) for #{time.ceil(2)}mins. "
 
-  instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes)
-  base_cost = instance_calculator.base_cost_per_min * time
-  best_fit_instances = instance_calculator.best_fit_instances(instance_numbers, nodes)
-  best_fit_type = best_fit_instances.first.name
-  best_fit_number = best_fit_instances.length
-
+  instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes, time, include_any_node_numbers)
+  base_cost = instance_calculator.total_base_cost
   overall_base_cost += base_cost
-
-  best_fit_price = best_fit_instances.first.price_per_min * best_fit_number
-  best_fit_cost = (best_fit_price * time)
-
+  
+  best_fit_cost = instance_calculator.total_best_fit_cost
   overall_best_fit_cost += best_fit_cost
 
-  if best_fit_number > nodes
+  if instance_calculator.best_fit_count > nodes
     print "To meet requirements with identical instance types, extra nodes required. "
     excess_nodes_count += 1
   end
@@ -126,20 +120,15 @@ file.readlines.each do |line|
     print "To meet requirements, larger instance(s) required than base equivalent. "
     over_resourced_count += 1
   end
-  best_fit_description = "#{best_fit_number} #{best_fit_type}"
-  print "Instance config of #{best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
+  print "Instance config of #{instance_calculator.best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
   
-  # if include_any_node_numbers
-  #   any_nodes_instances = instance_calculator.best_fit_instances(instance_numbers, nodes, false)
-  #   any_nodes_description = "#{any_nodes_instances.length} #{any_nodes_instances.first.name}"
-  #   if any_nodes_description != best_fit_description
-  #     print " Ignoring node counts, best fit would be #{any_nodes_description}"
-  #     print " at a cost of $#{base_cost.to_f.ceil(2)}"
-  #     print " (same cost)" if base_cost == best_fit_cost
-  #     print " (-$#{(best_fit_cost - base_cost).to_f.ceil(3)})" if base_cost != best_fit_cost
-  #     print "."
-  #   end
-  # end
+  if include_any_node_numbers && instance_calculator.any_nodes_is_different?
+    print " Ignoring node counts, best fit would be #{instance_calculator.any_nodes_description}"
+    print " at a cost of $#{base_cost.to_f.ceil(2)}"
+    print " (same cost)" if base_cost == best_fit_cost
+    print " (-$#{(best_fit_cost - base_cost).to_f.ceil(3)})" if base_cost != best_fit_cost
+    print "."
+  end
 
   puts
   puts
