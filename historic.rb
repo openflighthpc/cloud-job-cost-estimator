@@ -54,6 +54,8 @@ cols = header.split('|')
 cols.map! { |col| col.downcase.to_sym }
 Job = Struct.new(*cols) # '*' splat operator assigns each element of
                         # cols array as an argument to the 'new' method.
+
+include_any_node_numbers = user_args.key?('include-any-node-numbers')
 max_mem = 0.0
 max_mem_per_core = 0.0
 mem_total = 0.0
@@ -73,8 +75,6 @@ file.readlines.each do |line|
 
   time = determine_time(job.elapsed)
   next if time == 0
-
-  include_any_node_numbers = user_args.key?('include-any-node-numbers')
 
   completed_jobs_count += 1
   total_time += time
@@ -164,8 +164,10 @@ puts "Average mem per cpu: #{average_mem_cpus.ceil(2)}MB"
 puts "Max mem for 1 job: #{max_mem.ceil(2)}MB"
 puts "Max mem per cpu: #{max_mem_per_core.ceil(2)}MB"
 puts
-puts "Overall base cost (ignoring node counts): $#{overall_base_cost.to_f.ceil(2)}"
-puts "Average base cost per job: $#{(overall_base_cost / completed_jobs_count).to_f.ceil(2)}"
+if include_any_node_numbers
+  puts "Overall base cost (ignoring node counts): $#{overall_base_cost.to_f.ceil(2)}"
+  puts "Average base cost per job: $#{(overall_base_cost / completed_jobs_count).to_f.ceil(2)}"
+end
 puts "Overall best fit cost: $#{overall_best_fit_cost.to_f.ceil(2)}"
 puts "Average best fit cost per job: $#{(overall_best_fit_cost / completed_jobs_count).to_f.ceil(2)}"
 puts "#{over_resourced_count} jobs requiring larger instances than base equivalent"
