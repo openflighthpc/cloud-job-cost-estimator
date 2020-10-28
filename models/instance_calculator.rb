@@ -1,4 +1,3 @@
-require "bigdecimal"
 require_relative 'instance'
 
 class InstanceCalculator
@@ -46,18 +45,26 @@ class InstanceCalculator
   end
 
   def any_nodes_description
+    return if !@any_nodes_instance
+
     "#{@any_nodes_count} #{@any_nodes_instance.name}"
   end
 
   def any_nodes_cost_per_min
+    return if !@any_nodes_instance
+
     @any_nodes_instance.cost_per_min * @any_nodes_count
   end
 
   def total_any_nodes_cost
+    return if !@any_nodes_instance
+
     any_nodes_cost_per_min * @time
   end
 
   def any_nodes_is_different?
+    return if !@any_nodes_instance
+
     @any_nodes_instance != @best_fit_instance
   end
 
