@@ -53,6 +53,21 @@ include_any_node_numbers = user_args.key?('include-any-node-numbers')
 
 output = user_args['output']
 if output
+  if File.file?(output)
+    valid = false
+    while !valid
+      print "File #{output} already exists. This file will be overwritten, do you wish to continue (y/n)? "
+      choice = STDIN.gets.chomp.downcase
+      if choice == "y"
+        valid = true
+      elsif choice == "n"
+        return
+      else
+        puts "Invalid selection, please try again."
+      end
+    end
+  end
+
   csv_headers = %w[job_id state gpus cpus base_max_rss_mb adjusted_max_rss_mb num_nodes 
                    elapsed_mins suggested_num suggested_type suggested_cost_usd]
   csv_headers.concat(%w[any_nodes_num any_nodes_type any_nodes_cost_usd cost_diff_usd]) if include_any_node_numbers
