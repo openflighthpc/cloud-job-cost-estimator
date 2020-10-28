@@ -49,10 +49,13 @@ rescue TypeError
   exit 1
 end
 
+include_any_node_numbers = user_args.key?('include-any-node-numbers')
+
 output = user_args['output']
 if output
-  csv_headers = %w[job_id state gpus cpus base_max_rss_mb adjusted_max_rss_mb 
-                   num_nodes elapsed_mins suggested_num suggested_type suggested_cost_usd]
+  csv_headers = %w[job_id state gpus cpus base_max_rss_mb adjusted_max_rss_mb num_nodes 
+                   elapsed_mins suggested_num suggested_type suggested_cost_usd]
+  csv_headers.concat(%w[any_nodes_num any_nodes_type any_nodes_cost_usd cost_diff_usd]) if include_any_node_numbers
   CSV.open(output, "wb") do |csv|
     csv << csv_headers
   end
@@ -141,14 +144,15 @@ file.readlines.each do |line|
       print "."
     end
   end
-
   puts
   puts
 
   if output
     CSV.open(output, "ab") do |csv|
-      type = best_fit_instances.first.name
-      csv << ["'#{job.jobid}", job.state, gpus, cpus, max_rss, mem.ceil(2), nodes, time, best_fit_grouped[type], type, best_fit_cost.to_f]
+      results = ["'#{job.jobid}", job.state, gpus, cpus, max_rss, mem.ceil(2), nodes, time,
+                 best_fit_number, best_fit_type, best_fit_cost.to_f]
+      results.concat([any_nodes_instances.length, any_nodes_type, base_cost.to_f, any_nodes_cost_dif]) if include_any_node_numbers
+      csv << results
     end
   end
 end
