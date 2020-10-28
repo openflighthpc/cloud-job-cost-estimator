@@ -52,6 +52,8 @@ end
 include_any_node_numbers = user_args.key?('include-any-node-numbers')
 
 output = user_args['output']
+output = "output/#{output}" if output
+
 if output
   if File.file?(output)
     valid = false
