@@ -104,7 +104,7 @@ class InstanceCalculator
   def calculate_best_fit_instances(consider_nodes=true)
     nodes = consider_nodes ? @total_nodes.clone : 1 # if ignoring actual nodes, start with fewest possible and work up
     count = 0.0
-    target = base_instance_count
+    target = base_instance_count.to_f
     multipliers = @base_instance.possible_multipliers
     # Unless ignoring node counts, if 1 node specified job may not be parallelizable so try to match this as
     # much as possible, giving this priority over providing exactly fitting multiple nodes of equal size.
@@ -125,7 +125,6 @@ class InstanceCalculator
       # If can't meet needs in one node, increase node count by one and continue.
       if count < target
         nodes = 2
-        count = 0.0
       else
         return Instance.new(base_instance_type, best_fit.to_i), 1
       end
@@ -133,14 +132,13 @@ class InstanceCalculator
     
     best_fit = nil
     while !best_fit
-      per_node = (target - count) / nodes
+      per_node = target / nodes
       if multipliers.include?(per_node)
         best_fit = per_node
       elsif per_node < multipliers.first
         best_fit = multipliers.first
       else
         nodes += 1
-        next
       end
     end
 
