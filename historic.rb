@@ -54,6 +54,7 @@ end
 # initalise hash with one key per permitted state
 # each having an empty array as the value
 states = Hash[PERMITTED_STATES.collect { |x| [x, [] ] } ]
+state_times = Hash[PERMITTED_STATES.collect { |x| [x, 0] } ]
 
 header = file.first.chomp
 cols = header.split('|')
@@ -67,7 +68,6 @@ max_mem_per_cpu = 0.0
 mem_total = 0.0
 mem_count = 0
 cpu_count = 0
-total_time = 0.0
 over_resourced_count = 0
 excess_nodes_count = 0
 completed_jobs_count = 0
@@ -83,7 +83,7 @@ file.readlines.each do |line|
   next if time == 0
 
   completed_jobs_count += 1
-  total_time += time
+  state_times[job.state] += time
   time = time.ceil
   gpus = job.reqgres.split(":")[1].to_i
 
@@ -154,11 +154,14 @@ puts "-" * 50
 puts "Totals"
 puts
 
+total_time = state_times.values.sum
+
 average_mem = mem_total / mem_count
 average_mem_cpus = mem_total / cpu_count
 states.each do |state, jobs|
   next if !jobs.any?
-  puts "#{state.capitalize.gsub('_', ' ')} jobs processed: #{jobs.count}"
+  avg_time = 
+    puts "#{state.capitalize.gsub('_', ' ')} jobs processed: #{jobs.count} (avg time per: #{(state_times[state] / jobs.length).ceil(2)}mins)"
 end
 puts "Total jobs processed: #{completed_jobs_count}"
 puts "Average time per job: #{(total_time / completed_jobs_count).ceil(2)}mins"
