@@ -150,6 +150,7 @@ over_resourced_count = 0
 excess_nodes_count = 0
 overall_any_nodes_cost = 0.0
 overall_best_fit_cost = 0.0
+grouped_best_fit = {}
 file.readlines.each do |line|
   details = line.split("|")
   job = Job.new(*details)
@@ -202,8 +203,6 @@ file.readlines.each do |line|
   end
   msg << "Instance config of #{instance_calculator.best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
   
-  any_nodes_cost = nil
-
   if include_any_node_numbers
     any_nodes_cost = instance_calculator.total_any_nodes_cost
     overall_any_nodes_cost += any_nodes_cost
@@ -290,6 +289,7 @@ puts
 puts "-" * 50
 puts "Instances Summary"
 puts
+
 puts "Best Fit"
 puts InstanceCalculator.grouped_best_fit_description(customer_facing)
 
