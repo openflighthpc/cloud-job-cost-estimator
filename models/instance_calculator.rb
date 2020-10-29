@@ -32,6 +32,10 @@ class InstanceCalculator
     base_cost_per_min * @time
   end
 
+  def best_fit_type
+    @best_fit_instance.type
+  end
+
   def best_fit_description
     "#{@best_fit_count} #{@best_fit_instance.name}"
   end
@@ -42,6 +46,12 @@ class InstanceCalculator
 
   def total_best_fit_cost
     best_fit_cost_per_min * @time
+  end
+
+  def any_nodes_type
+    return if !@any_nodes_instance
+
+    @any_nodes_instance.type
   end
 
   def any_nodes_description
