@@ -68,6 +68,12 @@ class InstanceCalculator
     @any_nodes_instance != @best_fit_instance
   end
 
+  def any_nodes_best_fit_cost_diff
+    return if !@any_nodes_instance
+
+    total_best_fit_cost - total_any_nodes_cost
+  end
+
   private
 
   # Determine which of the three instance types is most appropriate

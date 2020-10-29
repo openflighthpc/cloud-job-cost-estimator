@@ -63,7 +63,7 @@ total_time = 0.0
 over_resourced_count = 0
 excess_nodes_count = 0
 completed_jobs_count = 0
-overall_base_cost = 0.0
+overall_any_nodes_cost = 0.0
 overall_best_fit_cost = 0.0
 file.readlines.each do |line|
   details = line.split("|")
@@ -105,7 +105,6 @@ file.readlines.each do |line|
 
   instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes, time, include_any_node_numbers)
   base_cost = instance_calculator.total_base_cost
-  overall_base_cost += base_cost
   
   best_fit_cost = instance_calculator.total_best_fit_cost
   overall_best_fit_cost += best_fit_cost
@@ -115,17 +114,21 @@ file.readlines.each do |line|
     excess_nodes_count += 1
   end
   if best_fit_cost > base_cost
-    print "To meet requirements, larger instance(s) required than base equivalent. "
+    print "To match number of nodes, larger instance(s) than job resources require must be used. "
     over_resourced_count += 1
   end
   print "Instance config of #{instance_calculator.best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
   
-  if include_any_node_numbers && instance_calculator.any_nodes_is_different?
-    print " Ignoring node counts, best fit would be #{instance_calculator.any_nodes_description}"
-    print " at a cost of $#{base_cost.to_f.ceil(2)}"
-    print " (same cost)" if base_cost == best_fit_cost
-    print " (-$#{(best_fit_cost - base_cost).to_f.ceil(3)})" if base_cost != best_fit_cost
-    print "."
+  if include_any_node_numbers
+    any_nodes_cost = instance_calculator.total_any_nodes_cost
+    overall_any_nodes_cost += any_nodes_cost
+    if instance_calculator.any_nodes_is_different?
+      any_nodes_cost_diff = instance_calculator.any_nodes_best_fit_cost_diff
+      print " Ignoring node counts, best fit would be #{instance_calculator.any_nodes_description}"
+      print " at a cost of $#{any_nodes_cost.to_f.ceil(2)}"
+      print any_nodes_cost_diff == 0 ? " (same cost)" : " (-$#{any_nodes_cost_diff.to_f.ceil(3)})"
+      print "."
+    end
   end
 
   puts
@@ -146,10 +149,10 @@ puts "Max mem for 1 job: #{max_mem.ceil(2)}MB"
 puts "Max mem per cpu: #{max_mem_per_cpu.ceil(2)}MB"
 puts
 if include_any_node_numbers
-  puts "Overall base cost (ignoring node counts): $#{overall_base_cost.to_f.ceil(2)}"
-  puts "Average base cost per job: $#{(overall_base_cost / completed_jobs_count).to_f.ceil(2)}"
+  puts "Overall cost ignoring node counts: $#{overall_any_nodes_cost.to_f.ceil(2)}"
+  puts "Average cost per job ignoring node counts: $#{(overall_any_nodes_cost / completed_jobs_count).to_f.ceil(2)}"
 end
 puts "Overall best fit cost: $#{overall_best_fit_cost.to_f.ceil(2)}"
 puts "Average best fit cost per job: $#{(overall_best_fit_cost / completed_jobs_count).to_f.ceil(2)}"
-puts "#{over_resourced_count} jobs requiring larger instances than base equivalent"
+puts "#{over_resourced_count} jobs requiring larger instances than minimum necessary, to match number of nodes"
 puts "#{excess_nodes_count} jobs requiring more nodes than used on physical cluster"
