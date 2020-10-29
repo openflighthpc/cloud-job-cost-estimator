@@ -51,8 +51,7 @@ end
 
 include_any_node_numbers = user_args.key?('include-any-node-numbers')
 
-output = user_args['output']
-output = "output/#{output}" if output
+output = user_args['output'] ? "output/#{user_args['output']}" : nil
 
 if output
   if File.file?(output)
@@ -84,7 +83,6 @@ cols.map! { |col| col.downcase.to_sym }
 Job = Struct.new(*cols) # '*' splat operator assigns each element of
                         # cols array as an argument to the 'new' method.
 
-include_any_node_numbers = user_args.key?('include-any-node-numbers')
 max_mem = 0.0
 max_mem_per_cpu = 0.0
 mem_total = 0.0
