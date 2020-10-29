@@ -150,7 +150,6 @@ over_resourced_count = 0
 excess_nodes_count = 0
 overall_any_nodes_cost = 0.0
 overall_best_fit_cost = 0.0
-grouped_best_fit = {}
 file.readlines.each do |line|
   details = line.split("|")
   job = Job.new(*details)
@@ -291,18 +290,4 @@ puts "-" * 50
 puts "Instances Summary"
 puts
 
-sorted_instances = grouped_best_fit.keys.sort_by do |key|
-  [
-    key.split(" ")[1].split(".")[0],
-    key.split(".")[1].split("x")[0].to_i,
-    key.split(".")[1],
-    key.split(" ")[0].to_i
-  ]
-end
-
-sorted_instances.each do |instance_and_number|
-  group = grouped_best_fit[instance_and_number]
-  print "#{group[:jobs].count} job(s) can be run on #{instance_and_number}. "
-  print "At a total time of #{group[:time]}mins this would cost $#{group[:cost].to_f.ceil(2)}.\n"
-end
-
+puts InstanceCalculator.grouped_best_fit_description
