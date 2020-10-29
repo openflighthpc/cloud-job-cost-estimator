@@ -1,6 +1,6 @@
 # cloud-job-cost-estimator
 
-Tool for calculating suitable instances and costs of Slurm jobs if ran on the cloud.
+Tool for calculating suitable instances and costs for running Slurm jobs on the cloud.
 
 ## Overview
 
@@ -20,7 +20,9 @@ The application reads Slurm job data from a provided text or csv file, with each
 
 The required data in the expected format can be retrieved from Slurm using the following command, replacing the dates as desired:
 
-`sacct --allclusters --allusers --parsable2 --starttime 2020-09-01T00:00:00 --endtime 2020-09-30T23:59:59 -o jobid,jobname,elapsed,state,maxrss,allocgres,alloctres`
+```
+sacct --allclusters --allusers --parsable2 --starttime 2020-09-01T00:00:00 --endtime 2020-09-30T23:59:59 -o jobid,jobname,elapsed,state,maxrss,allocgres,alloctres
+```
 
 The result must be placed in a `.txt` or `.csv` file in the same location as the application.
 
@@ -56,7 +58,9 @@ Job 004 used 12 GPUs, 16CPUs & 8.81MB on 1 node(s) for 43mins. To meet requireme
 
 The application will also highlight if matching the number of nodes used means using larger instance(s) than is strictly necessary to meet the job's resource needs:
 
-`Job 005 used 0 GPUs, 40CPUs & 8.81MB on 1 node(s) for 12mins. To meet requirements, larger instance(s) required than base equivalent. Instance config of 1 c5.12xlarge would cost $0.49.`
+```
+Job 005 used 0 GPUs, 40CPUs & 8.81MB on 1 node(s) for 12mins. To meet requirements, larger instance(s) required than base equivalent. Instance config of 1 c5.12xlarge would cost $0.49.
+```
 
 All cost figures only include the core instance costs.
 
