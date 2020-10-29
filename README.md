@@ -1,32 +1,30 @@
 # cloud-job-cost-estimator
 
-Tool for calculating suitable instances and costs of SLURM jobs if ran on the cloud.
+Tool for calculating suitable instances and costs of Slurm jobs if ran on the cloud.
 
 ## Overview
 
-cloud-job-cost-estimator is a proof of concept Ruby application, analysing historic SLUM jobs to determine suitable instances to run them on the cloud and what this would cost.
+cloud-job-cost-estimator is a proof of concept Ruby application, analysing historic Slurm jobs to determine instances suitable for running them on the cloud and what this would cost.
 
 ## Installation
 
 The application requires Ruby (2.5.1). No installation is required other than downloading the source code (via git or other means).
 
-For the data required by the application to be available, SLURM accounting must have been set up on your cluster.
+For Slurm to generate the data required by the application, Slurm accounting must have been set up on your cluster.
 
 ## Configuration
 
-###Source data and files
+### Source data and files
 
-The application reads SLURM job data from provided text files, with each job separated by a newline and job attributes separated by "|".
+The application reads Slurm job data from a provided text or csv file, with each job separated by a newline and job attributes separated by "|".
 
-The required data in the expected format can be retrieved from slurm using the following command, replacing the dates as desired:
+The required data in the expected format can be retrieved from Slurm using the following command, replacing the dates as desired:
 
-`
-sacct --allclusters --allusers --parsable2 --starttime 2020-09-01T00:00:00 --endtime 2020-09-30T23:59:59 -o jobid,jobname,elapsed,state,maxrss,allocgres,alloctres
-`
+`sacct --allclusters --allusers --parsable2 --starttime 2020-09-01T00:00:00 --endtime 2020-09-30T23:59:59 -o jobid,jobname,elapsed,state,maxrss,allocgres,alloctres`
 
-The result must be places in a `.txt` or `.csv` file in the same location as the application.
+The result must be placed in a `.txt` or `.csv` file in the same location as the application.
 
-###Instances Information###
+### Instances Information
 
 Details of the instance types to consider are included in the file `aws_instances.yml`. The application considers the three instance categories `gpu`, `compute` and `mem` when making its suggestions, equating to high GPU, high CPU and high memory instances respectively.
 
@@ -34,13 +32,14 @@ AWS costs and resources for an instance type scale proportionately with size. Th
 
 For example, the GPU instance `p3.2xlarge` has multipliers of 4 and 8. These equate to the instances `p3.8xlarge` and `p3.16xlarge`, which we know have costs, GPUs, CPUs and memory 4 and 8 times that of `p3.2xlarge` respectively.
 
-This file will require updating if these instances' resources, costs or available sizes change. The costs and size availability information currently included is that for eu-west-2 (London).
+This file is ready to use, but will require updating if these instances' resources, costs or available sizes change. The costs and size availability information currently included is that for eu-west-2 (London).
 
 ## Operation
 
 The application can be run using `ruby analyse_jobs.rb --input=filename.txt`, using the name of the file you wish to analyse. Results will be printed to the console.
 
-###Job analysis###
+### Job analysis
+
 This will determine appropriate AWS instances that would meet each completed job's GPUs, CPUs, MaxRSS (maximum memory, with an extra 10% added) and number of nodes used. Both the instance name and the number required are displayed, as well as the costs required to run those instances for the time the job took (rounded up to the nearest minute). The application will always recommend instances of the same type and size.
 
 ```
@@ -61,7 +60,7 @@ The application will also highlight if matching the number of nodes used means u
 
 All cost figures only include the core instance costs.
 
-###Totals###
+### Totals
 
 The application includes a final summary of the jobs, with information regarding totals and averages. The number of jobs requiring extra nodes or over sized instances is also highlighted.
 
@@ -81,7 +80,7 @@ Average best fit cost per job: $40.06
 50 jobs requiring more nodes than used on physical cluster
 ```
 
-###Optional Arguments
+### Optional Arguments
 
 The application can also be run with one optional argument:
 
