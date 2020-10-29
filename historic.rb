@@ -6,8 +6,6 @@ require "bigdecimal"
 # "minutes", "minutes:seconds", "hours:minutes:seconds", "days-hours",
 # "days-hours:minutes" and "days-hours:minutes:seconds".
 def determine_time(amount)
-  return 0.0 if amount == "UNLIMITED" || amount == "NOT_SET"
-
   days = false
   seconds = 0.0
   if amount.include?("-")
@@ -38,7 +36,7 @@ def determine_time(amount)
     seconds += amount[1].to_i * 60 # minutes
     seconds += amount[2].to_i # seconds
   end
-  (seconds / 60.0)
+  seconds / 60.0
 end
 
 user_args = Hash[ ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/) ]
@@ -57,7 +55,7 @@ Job = Struct.new(*cols) # '*' splat operator assigns each element of
 
 include_any_node_numbers = user_args.key?('include-any-node-numbers')
 max_mem = 0.0
-max_mem_per_core = 0.0
+max_mem_per_cpu = 0.0
 mem_total = 0.0
 mem_count = 0
 cpu_count = 0
@@ -96,8 +94,8 @@ file.readlines.each do |line|
   mem = max_rss * 1.1
   max_mem = mem if mem > max_mem
 
-  mem_per_core = (mem.to_f / cpus).ceil(2)
-  max_mem_per_core = mem_per_core if mem_per_core > max_mem_per_core
+  mem_per_cpu = (mem.to_f / cpus).ceil(2)
+  max_mem_per_cpu = mem_per_cpu if mem_per_cpu > max_mem_per_cpu
 
   mem_total += mem
   mem_count += 1
@@ -145,7 +143,7 @@ puts "Average time per job: #{(total_time / completed_jobs_count).ceil(2)}mins"
 puts "Average mem per job: #{average_mem.ceil(2)}MB"
 puts "Average mem per cpu: #{average_mem_cpus.ceil(2)}MB"
 puts "Max mem for 1 job: #{max_mem.ceil(2)}MB"
-puts "Max mem per cpu: #{max_mem_per_core.ceil(2)}MB"
+puts "Max mem per cpu: #{max_mem_per_cpu.ceil(2)}MB"
 puts
 if include_any_node_numbers
   puts "Overall base cost (ignoring node counts): $#{overall_base_cost.to_f.ceil(2)}"

@@ -80,11 +80,11 @@ class InstanceCalculator
     mem_count = 0
 
     # Gpus are priority, as can only be given by gpu instances.
-    # Additionally, gpu instances have high core counts and memory.
+    # Additionally, gpu instances have high cpu counts and memory.
     if @total_gpus > 0
       instance = Instance.new(:gpu) 
     else
-      # A compute instance has 2GB per 1 core. If need more than this, use a mem instance,
+      # A compute instance has 2GB per 1 cpu. If need more than this, use a mem instance,
       # which has 8GB per cpu.
       mem_per_cpu = @total_mem / @total_cpus
       base_instance_type = mem_per_cpu > 2000 ? :mem : :compute
