@@ -1,4 +1,5 @@
-frank_september_jobs.txt
-hamilton_queue_sept.txt
+*.txt
+!LICENSE.txt
+*.csv
 output/*
 !output/.gitkeep
