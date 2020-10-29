@@ -137,47 +137,69 @@ file.readlines.each do |line|
     end
   end
 
-  states[job.state] << msg
+  states[job.state] << { message: msg, time: time, mem: mem }
 end
 
 states.each do |state, jobs|
   next if !jobs.any?
   puts state
   puts "#{'-'*50}\n"
-  puts jobs
+  puts jobs.map { |job| job[:message] }
   puts
 end
 
 puts "-" * 50
-puts "Totals"
-puts
+puts "Totals\n"
 
-total_time = state_times.values.sum
+total_time = states.values.flatten.map { |job| job[:time] }.reduce(&:+)
 total_jobs_count = states.values.flatten.count
 
 average_mem = mem_total / mem_count
 average_mem_cpus = mem_total / cpu_count
-states.each do |state, jobs|
-  next if !jobs.any?
-  avg_time = 
-    puts "#{state.capitalize.gsub('_', ' ')} jobs processed: #{jobs.count} (avg time per: #{(state_times[state] / jobs.length).ceil(2)}mins)"
+
+print "Total jobs processed: #{total_jobs_count}"
+if states.count > 1
+  print " ("
+  print states.map { |state, jobs| "#{state}: #{jobs.count}" }.join(', ')
+  print ")"
 end
-puts "Total jobs processed: #{total_jobs_count}"
-puts "Average time per job: #{(total_time / total_jobs_count).ceil(2)}mins"
 puts
-puts "Average mem per job: #{average_mem.ceil(2)}MB"
+print "Average time per job: #{(total_time / total_jobs_count).ceil(2)}mins"
+if states.count > 1
+  print " ("
+  print states.map { |state, jobs| 
+    job_str = begin
+                jobs.map { |job| job[:time] }.reduce(&:+) / jobs.length
+              rescue NoMethodError
+                0
+              end
+    "#{state}: #{job_str}mins"
+  }.join(', ')
+  print ")"
+end
+puts
+print "Average mem per job: #{average_mem.ceil(2)}MB"
+if states.count > 1
+  print " ("
+  print states.map { |state, jobs|
+    job_str = begin
+                (jobs.map { |job| job[:mem] }.reduce(&:+) / jobs.length).ceil(2)
+              rescue NoMethodError
+                0
+              end
+    "#{state}: #{job_str}MB"
+  }.join(', ')
+  print ")"
+end
+puts
+
 puts "Average mem per cpu: #{average_mem_cpus.ceil(2)}MB"
 puts "Max mem for 1 job: #{max_mem.ceil(2)}MB"
 puts "Max mem per cpu: #{max_mem_per_cpu.ceil(2)}MB"
 puts
 if include_any_node_numbers
-<<<<<<< HEAD
   puts "Overall cost ignoring node counts: $#{overall_any_nodes_cost.to_f.ceil(2)}"
   puts "Average cost per job ignoring node counts: $#{(overall_any_nodes_cost / completed_jobs_count).to_f.ceil(2)}"
-=======
-  puts "Overall base cost (ignoring node counts): $#{overall_base_cost.to_f.ceil(2)}"
-  puts "Average base cost per job: $#{(overall_base_cost / total_jobs_count).to_f.ceil(2)}"
->>>>>>> 5d4c39b... Change total jobs variable calculation
 end
 puts "Overall best fit cost: $#{overall_best_fit_cost.to_f.ceil(2)}"
 puts "Average best fit cost per job: $#{(overall_best_fit_cost / completed_jobs_count).to_f.ceil(2)}"
