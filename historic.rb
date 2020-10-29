@@ -2,12 +2,10 @@ require_relative './models/instance_calculator'
 require_relative './models/instance'
 require "bigdecimal"
 
-# slurm gives remaining job times in the following formats:
+# slurm gives job times in the following formats:
 # "minutes", "minutes:seconds", "hours:minutes:seconds", "days-hours",
 # "days-hours:minutes" and "days-hours:minutes:seconds".
 def determine_time(amount)
-  return 0.0 if amount == "UNLIMITED" || amount == "NOT_SET"
-
   days = false
   seconds = 0.0
   if amount.include?("-")
@@ -38,7 +36,7 @@ def determine_time(amount)
     seconds += amount[1].to_i * 60 # minutes
     seconds += amount[2].to_i # seconds
   end
-  (seconds / 60.0)
+  seconds / 60.0
 end
 
 user_args = Hash[ ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/) ]
@@ -57,7 +55,7 @@ Job = Struct.new(*cols) # '*' splat operator assigns each element of
 
 include_any_node_numbers = user_args.key?('include-any-node-numbers')
 max_mem = 0.0
-max_mem_per_core = 0.0
+max_mem_per_cpu = 0.0
 mem_total = 0.0
 mem_count = 0
 cpu_count = 0
@@ -65,7 +63,7 @@ total_time = 0.0
 over_resourced_count = 0
 excess_nodes_count = 0
 completed_jobs_count = 0
-overall_base_cost = 0.0
+overall_any_nodes_cost = 0.0
 overall_best_fit_cost = 0.0
 file.readlines.each do |line|
   details = line.split("|")
@@ -96,8 +94,8 @@ file.readlines.each do |line|
   mem = max_rss * 1.1
   max_mem = mem if mem > max_mem
 
-  mem_per_core = (mem.to_f / cpus).ceil(2)
-  max_mem_per_core = mem_per_core if mem_per_core > max_mem_per_core
+  mem_per_cpu = (mem.to_f / cpus).ceil(2)
+  max_mem_per_cpu = mem_per_cpu if mem_per_cpu > max_mem_per_cpu
 
   mem_total += mem
   mem_count += 1
@@ -105,44 +103,30 @@ file.readlines.each do |line|
 
   print "Job #{job.jobid} used #{gpus} GPUs, #{cpus}CPUs & #{mem.ceil(2)}MB on #{nodes} node(s) for #{time.ceil(2)}mins. "
 
-  instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes)
-  instance_numbers = instance_calculator.base_instance_numbers(cpus, gpus, mem)
-  best_fit_instances = instance_calculator.best_fit_instances(instance_numbers, nodes)
-  best_fit_type = best_fit_instances.first.name
-  best_fit_number = best_fit_instances.length
-
-  cost_per_min = BigDecimal(0, 8)
-  cost_per_min += instance_numbers[:gpu] * BigDecimal(Instance::AWS_INSTANCES[:gpu][:base][:price_per_min], 8)
-  cost_per_min += instance_numbers[:compute] * BigDecimal(Instance::AWS_INSTANCES[:compute][:base][:price_per_min], 8)
-  cost_per_min += instance_numbers[:mem] * BigDecimal(Instance::AWS_INSTANCES[:mem][:base][:price_per_min], 8)
-  base_cost = (cost_per_min * time)
-
-  overall_base_cost += base_cost
-
-  best_fit_price = best_fit_instances.first.price_per_min * best_fit_number
-  best_fit_cost = (best_fit_price * time)
-
+  instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes, time, include_any_node_numbers)
+  base_cost = instance_calculator.total_base_cost
+  
+  best_fit_cost = instance_calculator.total_best_fit_cost
   overall_best_fit_cost += best_fit_cost
 
-  if best_fit_number > nodes
+  if instance_calculator.best_fit_count > nodes
     print "To meet requirements with identical instance types, extra nodes required. "
     excess_nodes_count += 1
   end
   if best_fit_cost > base_cost
-    print "To meet requirements, larger instance(s) required than base equivalent. "
+    print "To match number of nodes, larger instance(s) than job resources require must be used. "
     over_resourced_count += 1
   end
-  best_fit_description = "#{best_fit_number} #{best_fit_type}"
-  print "Instance config of #{best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
+  print "Instance config of #{instance_calculator.best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
   
   if include_any_node_numbers
-    any_nodes_instances = instance_calculator.best_fit_instances(instance_numbers, nodes, false)
-    any_nodes_description = "#{any_nodes_instances.length} #{any_nodes_instances.first.name}"
-    if any_nodes_description != best_fit_description
-      print " Ignoring node counts, best fit would be #{any_nodes_description}"
-      print " at a cost of $#{base_cost.to_f.ceil(2)}"
-      print " (same cost)" if base_cost == best_fit_cost
-      print " (-$#{(best_fit_cost - base_cost).to_f.ceil(3)})" if base_cost != best_fit_cost
+    any_nodes_cost = instance_calculator.total_any_nodes_cost
+    overall_any_nodes_cost += any_nodes_cost
+    if instance_calculator.any_nodes_is_different?
+      any_nodes_cost_diff = instance_calculator.any_nodes_best_fit_cost_diff
+      print " Ignoring node counts, best fit would be #{instance_calculator.any_nodes_description}"
+      print " at a cost of $#{any_nodes_cost.to_f.ceil(2)}"
+      print any_nodes_cost_diff == 0 ? " (same cost)" : " (-$#{any_nodes_cost_diff.to_f.ceil(3)})"
       print "."
     end
   end
@@ -162,13 +146,13 @@ puts "Average time per job: #{(total_time / completed_jobs_count).ceil(2)}mins"
 puts "Average mem per job: #{average_mem.ceil(2)}MB"
 puts "Average mem per cpu: #{average_mem_cpus.ceil(2)}MB"
 puts "Max mem for 1 job: #{max_mem.ceil(2)}MB"
-puts "Max mem per cpu: #{max_mem_per_core.ceil(2)}MB"
+puts "Max mem per cpu: #{max_mem_per_cpu.ceil(2)}MB"
 puts
 if include_any_node_numbers
-  puts "Overall base cost (ignoring node counts): $#{overall_base_cost.to_f.ceil(2)}"
-  puts "Average base cost per job: $#{(overall_base_cost / completed_jobs_count).to_f.ceil(2)}"
+  puts "Overall cost ignoring node counts: $#{overall_any_nodes_cost.to_f.ceil(2)}"
+  puts "Average cost per job ignoring node counts: $#{(overall_any_nodes_cost / completed_jobs_count).to_f.ceil(2)}"
 end
 puts "Overall best fit cost: $#{overall_best_fit_cost.to_f.ceil(2)}"
 puts "Average best fit cost per job: $#{(overall_best_fit_cost / completed_jobs_count).to_f.ceil(2)}"
-puts "#{over_resourced_count} jobs requiring larger instances than base equivalent"
+puts "#{over_resourced_count} jobs requiring larger instances than minimum necessary, to match number of nodes"
 puts "#{excess_nodes_count} jobs requiring more nodes than used on physical cluster"

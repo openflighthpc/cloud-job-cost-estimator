@@ -2,7 +2,7 @@ require 'yaml'
 require "bigdecimal"
 
 class Instance
-  attr_reader :type
+  attr_reader :type, :multiplier
 
   AWS_INSTANCES = YAML.load(File.read("aws_instances.yml"))
 
@@ -18,6 +18,10 @@ class Instance
     @base_name = AWS_INSTANCES[@type][:base][:name]
   end
 
+  def ==(other)
+    @type == other.type && @multiplier == other.multiplier
+  end
+
   def cpus
     @base_cpus * @multiplier
   end
@@ -30,16 +34,12 @@ class Instance
     @base_mem * @multiplier # in GB
   end
 
-  def price_per_min
+  def cost_per_min
     @base_price_per_min * @multiplier
   end
 
-  def update_multiplier(multiplier)
-    if multiplier != 1 && !AWS_INSTANCES[@type][:multipliers].include?(multiplier)
-      puts "invalid multiplier for this instance type"
-    else
-      @multiplier = multiplier
-    end
+  def possible_multipliers
+    AWS_INSTANCES[@type][:multipliers].sort
   end
 
   def name
