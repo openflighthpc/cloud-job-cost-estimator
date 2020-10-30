@@ -41,6 +41,10 @@ class InstanceCalculator
     @@grouped_best_fit
   end
 
+  def self.grouped_any_nodes
+    @@grouped_any_nodes
+  end
+
   def self.grouped_best_fit_description
     return @@grouped_best_fit_description if @@grouped_best_fit_description
     
