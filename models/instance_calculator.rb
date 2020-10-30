@@ -52,7 +52,7 @@ class InstanceCalculator
     sort_descriptions(@@grouped_best_fit.keys).each do |instance_and_number|
       group = @@grouped_best_fit[instance_and_number]
       @@grouped_best_fit_description <<  "#{group[:jobs]} job(s) can be run on #{instance_and_number}. "
-      @@grouped_best_fit_description << "At a total time of #{group[:time]}mins this would cost $#{group[:cost].to_f.ceil(2)}. "
+      @@grouped_best_fit_description << "Total runtime for these jobs would be #{group[:time]}mins, costing $#{group[:cost].to_f.ceil(2)}. "
       if group[:over_resourced] > 0
         @@grouped_best_fit_description << "#{group[:over_resourced]}#{"(all)" if group[:over_resourced] == group[:jobs]}"
         @@grouped_best_fit_description << " of these are over resourced, to match node counts."
@@ -70,7 +70,7 @@ class InstanceCalculator
     sort_descriptions(@@grouped_any_nodes.keys).each do |instance_and_number|
       group = @@grouped_any_nodes[instance_and_number]
       @@grouped_any_nodes_description <<  "#{group[:jobs]} job(s) can be run on #{instance_and_number}. "
-      @@grouped_any_nodes_description << "At a total time of #{group[:time]}mins this would cost $#{group[:cost].to_f.ceil(2)}.\n"
+      @@grouped_any_nodes_description << "Total runtime for these jobs would be #{group[:time]}mins, costing $#{group[:cost].to_f.ceil(2)}.\n"
     end
 
     @@grouped_any_nodes_description

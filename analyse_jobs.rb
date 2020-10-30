@@ -203,6 +203,7 @@ file.readlines.each do |line|
   msg << "Instance config of #{instance_calculator.best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
   
   any_nodes_cost = nil
+
   if include_any_node_numbers
     any_nodes_cost = instance_calculator.total_any_nodes_cost
     overall_any_nodes_cost += any_nodes_cost
