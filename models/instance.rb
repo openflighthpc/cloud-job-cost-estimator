@@ -32,6 +32,7 @@ class Instance
   attr_reader :type, :multiplier
 
   AWS_INSTANCES = YAML.load(File.read("aws_instances.yml"))
+  NAMES = %w[small medium large]
 
   def initialize(type, multiplier = 1)
     raise ArgumentError, 'Not a valid instance type' if !AWS_INSTANCES.keys.include?(type.to_sym)
@@ -67,6 +68,20 @@ class Instance
 
   def possible_multipliers
     AWS_INSTANCES[@type][:multipliers].sort
+  end
+
+  def descriptive_type
+    type == :gpu ? "GPU" : type.to_s.capitalize
+  end
+
+  def customer_facing_name
+    relative_size = possible_multipliers.index(@multiplier)
+    if relative_size <= 2
+      "#{descriptive_type}(#{NAMES[relative_size]})"
+    else
+      extra = relative_size - 2
+      "#{descriptive_type}(#{"x" * extra}large)"
+    end
   end
 
   def name
