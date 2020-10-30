@@ -188,7 +188,7 @@ file.readlines.each do |line|
 
   msg = "Job #{job.jobid} used #{gpus} GPUs, #{cpus}CPUs & #{mem.ceil(2)}MB on #{nodes} node(s) for #{time.ceil(2)}mins. "
 
-  instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes, time, include_any_node_numbers, customer_facing)
+  instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes, time, include_any_node_numbers, customer_facing, :azure)
   base_cost = instance_calculator.total_base_cost
   
   best_fit_cost = instance_calculator.total_best_fit_cost
@@ -202,7 +202,7 @@ file.readlines.each do |line|
     over_resourced_count += 1
   end
   msg << "Instance config of #{instance_calculator.best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
-  
+
   if include_any_node_numbers
     any_nodes_cost = instance_calculator.total_any_nodes_cost
     overall_any_nodes_cost += any_nodes_cost
