@@ -71,7 +71,6 @@ cpu_count = 0
 over_resourced_count = 0
 excess_nodes_count = 0
 overall_any_nodes_cost = 0.0
-overall_best_fit_cost = 0.0
 file.readlines.each do |line|
   details = line.split("|")
   job = Job.new(*details)
@@ -113,7 +112,6 @@ file.readlines.each do |line|
   base_cost = instance_calculator.total_base_cost
   
   best_fit_cost = instance_calculator.total_best_fit_cost
-  overall_best_fit_cost += best_fit_cost
 
   if instance_calculator.best_fit_count > nodes
     msg << "To meet requirements with identical instance types, extra nodes required. "
@@ -137,7 +135,7 @@ file.readlines.each do |line|
     end
   end
 
-  states[job.state] << { message: msg, time: time, mem: mem }
+  states[job.state] << { message: msg, time: time, mem: mem, best_fit_cost: best_fit_cost }
 end
 
 states.each do |state, jobs|
@@ -156,6 +154,8 @@ total_jobs_count = states.values.flatten.count
 
 average_mem = mem_total / mem_count
 average_mem_cpus = mem_total / cpu_count
+
+overall_best_fit_cost = states.values.flatten.map { |job| job[:best_fit_cost] }.reduce(&:+)
 
 print "Total jobs processed: #{total_jobs_count}"
 if states.count > 1 
@@ -201,7 +201,31 @@ if include_any_node_numbers
   puts "Overall cost ignoring node counts: $#{overall_any_nodes_cost.to_f.ceil(2)}"
   puts "Average cost per job ignoring node counts: $#{(overall_any_nodes_cost / total_jobs_count).to_f.ceil(2)}"
 end
-puts "Overall best fit cost: $#{overall_best_fit_cost.to_f.ceil(2)}"
-puts "Average best fit cost per job: $#{(overall_best_fit_cost / total_jobs_count).to_f.ceil(2)}"
+print "Overall best fit cost: $#{overall_best_fit_cost.to_f.ceil(2)}"
+if states.count > 1
+  print " ("
+  print states.map { |state, jobs|
+    job_str = jobs.map { |job| job[:best_fit_cost] }.reduce(&:+).to_f.ceil(2)
+    "#{state}: $#{job_str}" if job_str > 0
+  }.compact.join(', ')
+  print ")"
+end
+puts
+
+print "Average best fit cost per job: $#{(overall_best_fit_cost / total_jobs_count).to_f.ceil(2)}"
+if states.count > 1
+  print " ("
+  print states.map { |state, jobs|
+    job_str = begin
+                (jobs.map { |job| job[:best_fit_cost] }.reduce(&:+).to_f / jobs.length).ceil(2)
+              rescue NoMethodError
+                0
+              end
+    "#{state}: $#{job_str}" if job_str > 0
+  }.compact.join(', ')
+  print ")"
+end
+puts
+
 puts "#{over_resourced_count} jobs requiring larger instances than minimum necessary, to match number of nodes"
 puts "#{excess_nodes_count} jobs requiring more nodes than used on physical cluster"
