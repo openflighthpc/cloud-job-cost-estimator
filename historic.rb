@@ -1,6 +1,7 @@
 require_relative './models/instance_calculator'
 require_relative './models/instance'
 require "bigdecimal"
+require 'csv'
 
 # slurm gives job times in the following formats:
 # "minutes", "minutes:seconds", "hours:minutes:seconds", "days-hours",
@@ -56,13 +57,41 @@ end
 states = Hash[PERMITTED_STATES.collect { |x| [x, [] ] } ]
 state_times = Hash[PERMITTED_STATES.collect { |x| [x, 0] } ]
 
+include_any_node_numbers = user_args.key?('include-any-node-numbers')
+
+output = user_args['output'] ? "output/#{user_args['output']}" : nil
+
+if output
+  if File.file?(output)
+    valid = false
+    while !valid
+      print "File #{output} already exists. This file will be overwritten, do you wish to continue (y/n)? "
+      choice = STDIN.gets.chomp.downcase
+      if choice == "y"
+        valid = true
+      elsif choice == "n"
+        return
+      else
+        puts "Invalid selection, please try again."
+      end
+    end
+  end
+
+  csv_headers = %w[job_id state gpus cpus base_max_rss_mb adjusted_max_rss_mb num_nodes 
+                   elapsed_mins suggested_num suggested_type suggested_cost_usd]
+  csv_headers.concat(%w[any_nodes_num any_nodes_type any_nodes_cost_usd cost_diff_usd]) if include_any_node_numbers
+  CSV.open(output, "wb") do |csv|
+    csv << csv_headers
+  end
+end
+
+
 header = file.first.chomp
 cols = header.split('|')
 cols.map! { |col| col.downcase.to_sym }
 Job = Struct.new(*cols) # '*' splat operator assigns each element of
                         # cols array as an argument to the 'new' method.
 
-include_any_node_numbers = user_args.key?('include-any-node-numbers')
 max_mem = 0.0
 max_mem_per_cpu = 0.0
 mem_total = 0.0
@@ -94,7 +123,7 @@ file.readlines.each do |line|
   cpus = allocated_details["cpu"].to_i
   nodes = allocated_details["node"].to_i
 
-  max_rss = (job.maxrss[0...-1].to_f / 1000).ceil
+  max_rss = (job.maxrss[0...-1].to_f / 1000)
   max_vm_size = (job.maxvmsize[0...-1].to_f / 1000).ceil
   mem = max_rss * 1.1
   max_mem = mem if mem > max_mem
@@ -144,6 +173,19 @@ states.each do |state, jobs|
   puts "#{'-'*50}\n"
   puts jobs.map { |job| job[:message] }
   puts
+
+
+  if output
+    CSV.open(output, "ab") do |csv|
+      results = ["'#{job.jobid}", job.state, gpus, cpus, max_rss, mem.ceil(2), nodes, time,
+                 instance_calculator.best_fit_count, instance_calculator.best_fit_type, best_fit_cost.to_f]
+      if include_any_node_numbers
+        results.concat([instance_calculator.any_nodes_count, instance_calculator.any_nodes_type])
+        results.concat([instance_calculator.total_any_nodes_cost.to_f, instance_calculator.any_nodes_best_fit_cost_diff.to_f])  
+      end
+      csv << results
+    end
+  end
 end
 
 puts "-" * 50
