@@ -88,7 +88,7 @@ Average best fit cost per job: $40.06
 
 ### Optional Arguments
 
-The application can also be run with up to two optional arguments.
+The application can also be run with up to three optional arguments.
 
 #### --include-any-node-numbers
 
@@ -108,6 +108,31 @@ A summary of costs when ignoring node counts will also be added to the totals se
 ```
 Overall base cost (ignoring node counts): $22344.02
 Average base cost per job: $38.66
+```
+
+#### --include-failed
+
+`ruby analyse_jobs.rb --input=filename.txt --include-failed`
+
+Under normal circumstances, this application will only include jobs that completed successfully in its calculations. Including this argument will include all jobs with any of the following states:
+- COMPLETED
+- FAILED
+- CANCELLED
+- NODE_FAIL
+- OUT_OF_MEMORY
+- TIMEOUT
+
+When using this flag, most of the information in the totals section will have multiple results: a total over all jobs, and individual results for jobs grouped by state. For example:
+
+```
+--------------------------------------------------
+Totals
+Total jobs processed: 626 (FAILED: 77, CANCELLED: 151, TIMEOUT: 2, COMPLETED: 396)
+Average time per job: 8839mins (FAILED: 1525mins, CANCELLED: 29499mins, TIMEOUT: 31mins, COMPLETED: 2427mins)
+Average mem per job: 1526.83MB (FAILED: 2003.49MB, CANCELLED: 3278.51MB, TIMEOUT: 25.71MB, COMPLETED: 773.78MB)
+Average mem per cpu: 152.86MB
+Max mem for 1 job: 31343.89MB
+Max mem per cpu: 16438.82MB
 ```
 
 #### --output=
