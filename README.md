@@ -16,7 +16,7 @@ For Slurm to generate the data required by the application, Slurm accounting mus
 
 ### Source data and files
 
-The application reads Slurm job data from a provided text or csv file, with each job separated by a newline and job attributes separated by "|".
+The application reads Slurm job data from a provided text file, with each job separated by a newline and job attributes separated by "|".
 
 The required data in the expected format can be retrieved from Slurm using the following command, replacing the dates as desired:
 
@@ -86,7 +86,9 @@ Average best fit cost per job: $40.06
 
 ### Optional Arguments
 
-The application can also be run with one optional argument:
+The application can also be run with up to two optional arguments.
+
+#### --include-any-node-numbers
 
 `ruby analyse_jobs.rb --input=filename.txt --include-any-node-numbers`
 
@@ -105,6 +107,16 @@ A summary of costs when ignoring node counts will also be added to the totals se
 Overall base cost (ignoring node counts): $22344.02
 Average base cost per job: $38.66
 ```
+
+#### --output=
+
+`ruby analyse_jobs.rb --input=filename.txt --output=results.csv`
+
+Including this argument will (in addition to the console output) save results of the job analysis as a csv file, with the name of your choosing. This file will be saved in the `output` folder.
+
+If the filename you provide is the same as a file that already exists in `output`, a prompt will ask for confirmation that you are happy to overwrite any existing data.
+
+If both this and `--include-any-node-numbers` are used, these additional suggestions will also be in the generated file.
 
 # Contributing
 
