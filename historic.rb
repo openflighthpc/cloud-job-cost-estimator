@@ -165,16 +165,6 @@ file.readlines.each do |line|
   end
 
   states[job.state] << { message: msg, time: time, mem: mem, best_fit_cost: best_fit_cost }
-end
-
-states.each do |state, jobs|
-  next if !jobs.any?
-  puts state
-  puts "#{'-'*50}\n"
-  puts jobs.map { |job| job[:message] }
-  puts
-
-
   if output
     CSV.open(output, "ab") do |csv|
       results = ["'#{job.jobid}", job.state, gpus, cpus, max_rss, mem.ceil(2), nodes, time,
@@ -186,6 +176,14 @@ states.each do |state, jobs|
       csv << results
     end
   end
+end
+
+states.each do |state, jobs|
+  next if !jobs.any?
+  puts state
+  puts "#{'-'*50}\n"
+  puts jobs.map { |job| job[:message] }
+  puts
 end
 
 puts "-" * 50
