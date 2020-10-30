@@ -48,8 +48,12 @@ class InstanceCalculator
     @base_instance.type
   end
 
+  def base_instance_name
+    @customer_facing ? @base_instance.customer_facing_name : @base_instance.name
+  end
+
   def base_instances_description
-    "#{@base_instance_count} #{@customer_facing ? @base_instance.customer_facing_name : @base_instance.name}"
+    "#{@base_instance_count} #{base_instance_name}"
   end
 
   def base_cost_per_min
@@ -60,12 +64,12 @@ class InstanceCalculator
     base_cost_per_min * @time
   end
 
-  def best_fit_type
-    @best_fit_instance.name
+  def best_fit_name
+    @customer_facing ? @best_fit_instance.customer_facing_name : @best_fit_instance.name
   end
 
   def best_fit_description
-    "#{@best_fit_count} #{@customer_facing ? @best_fit_instance.customer_facing_name : @best_fit_instance.name}"
+    "#{@best_fit_count} #{best_fit_name}"
   end
 
   def best_fit_cost_per_min
@@ -76,16 +80,16 @@ class InstanceCalculator
     best_fit_cost_per_min * @time
   end
 
-  def any_nodes_type
+  def any_nodes_name
     return if !@any_nodes_instance
 
-    @any_nodes_instance.name
+    @customer_facing ? @any_nodes_instance.customer_facing_name : @any_nodes_instance.name
   end
 
   def any_nodes_description
     return if !@any_nodes_instance
 
-    "#{@any_nodes_count} #{@customer_facing ? @any_nodes_instance.customer_facing_name : @any_nodes_instance.name}"
+    "#{@any_nodes_count} #{any_nodes_name}"
   end
 
   def any_nodes_cost_per_min

@@ -195,9 +195,9 @@ file.readlines.each do |line|
   if output
     CSV.open(output, "ab") do |csv|
       results = ["'#{job.jobid}", job.state, gpus, cpus, max_rss, mem.ceil(2), nodes, time,
-                 instance_calculator.best_fit_count, instance_calculator.best_fit_type, best_fit_cost.to_f]
+                 instance_calculator.best_fit_count, instance_calculator.best_fit_name, best_fit_cost.to_f]
       if include_any_node_numbers
-        results.concat([instance_calculator.any_nodes_count, instance_calculator.any_nodes_type])
+        results.concat([instance_calculator.any_nodes_count, instance_calculator.any_nodes_name])
         results.concat([instance_calculator.total_any_nodes_cost.to_f, instance_calculator.any_nodes_best_fit_cost_diff.to_f])  
       end
       csv << results
