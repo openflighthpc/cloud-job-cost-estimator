@@ -88,7 +88,7 @@ Average best fit cost per job: $40.06
 
 ### Optional Arguments
 
-The application can also be run with up to three optional arguments.
+The application can also be run with up to four optional arguments.
 
 #### --include-any-node-numbers
 
@@ -144,6 +144,20 @@ Including this argument will (in addition to the console output) save results of
 If the filename you provide is the same as a file that already exists in `output`, a prompt will ask for confirmation that you are happy to overwrite any existing data.
 
 If both this and `--include-any-node-numbers` are used, these additional suggestions will also be in the generated file.
+
+### --customer-facing
+
+`ruby analyse_jobs.rb --input=filename.txt --customer-facing`
+
+If this argument is included, generalised, customer facing names will be used for the suggested instances. Names are based upon the type of instance (GPU, Compute or Mem) and their relative size (small, medium, large, xlarge, xxlarge, etc.):
+
+```
+Job 007 used 8 GPUs, 10CPUs & 8.06MB on 1 node(s) for 2mins. Instance config of 1 GPU(large) would cost $0.96.
+Job 008 used 0 GPUs, 4CPUs & 5.28MB on 1 node(s) for 92mins. Instance config of 1 Compute(medium) would cost $0.31.
+Job 009 used 0 GPUs, 10CPUs & 7.17MB on 1 node(s) for 12mins. To match number of nodes, larger instance(s) than job resources require must be used. Instance config of 1 Compute(xlarge) would cost $0.17.
+
+```
+This will apply to all suggestions, including those saved to a csv if the `--output= flag` is also used.
 
 # Contributing
 
