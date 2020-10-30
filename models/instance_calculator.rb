@@ -33,7 +33,7 @@ class InstanceCalculator
   end
 
   def best_fit_type
-    @best_fit_instance.type
+    @best_fit_instance.name
   end
 
   def best_fit_description
@@ -51,7 +51,7 @@ class InstanceCalculator
   def any_nodes_type
     return if !@any_nodes_instance
 
-    @any_nodes_instance.type
+    @any_nodes_instance.name
   end
 
   def any_nodes_description
