@@ -44,9 +44,8 @@ class InstanceCalculator
   def self.grouped_best_fit_description
     return @@grouped_best_fit_description if @@grouped_best_fit_description
     
-    sorted_instances = sort_descriptions(@@grouped_best_fit.keys)
     @@grouped_best_fit_description = ""
-    sorted_instances.each do |instance_and_number|
+    sort_descriptions(@@grouped_best_fit.keys).each do |instance_and_number|
       group = @@grouped_best_fit[instance_and_number]
       @@grouped_best_fit_description <<  "#{group[:jobs]} job(s) can be run on #{instance_and_number}. "
       @@grouped_best_fit_description << "At a total time of #{group[:time]}mins this would cost $#{group[:cost].to_f.ceil(2)}. "
@@ -63,9 +62,8 @@ class InstanceCalculator
   def self.grouped_any_nodes_description
     return @@grouped_any_nodes_description if @@grouped_any_nodes_description
 
-    sorted_instances = sort_descriptions(@@grouped_any_nodes.keys)
     @@grouped_any_nodes_description = ""
-    sorted_instances.each do |instance_and_number|
+    sort_descriptions(@@grouped_any_nodes.keys).each do |instance_and_number|
       group = @@grouped_any_nodes[instance_and_number]
       @@grouped_any_nodes_description <<  "#{group[:jobs]} job(s) can be run on #{instance_and_number}. "
       @@grouped_any_nodes_description << "At a total time of #{group[:time]}mins this would cost $#{group[:cost].to_f.ceil(2)}.\n"
