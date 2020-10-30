@@ -199,9 +199,9 @@ puts "Max mem per cpu: #{max_mem_per_cpu.ceil(2)}MB"
 puts
 if include_any_node_numbers
   puts "Overall cost ignoring node counts: $#{overall_any_nodes_cost.to_f.ceil(2)}"
-  puts "Average cost per job ignoring node counts: $#{(overall_any_nodes_cost / completed_jobs_count).to_f.ceil(2)}"
+  puts "Average cost per job ignoring node counts: $#{(overall_any_nodes_cost / total_jobs_count).to_f.ceil(2)}"
 end
 puts "Overall best fit cost: $#{overall_best_fit_cost.to_f.ceil(2)}"
-puts "Average best fit cost per job: $#{(overall_best_fit_cost / completed_jobs_count).to_f.ceil(2)}"
+puts "Average best fit cost per job: $#{(overall_best_fit_cost / total_jobs_count).to_f.ceil(2)}"
 puts "#{over_resourced_count} jobs requiring larger instances than minimum necessary, to match number of nodes"
 puts "#{excess_nodes_count} jobs requiring more nodes than used on physical cluster"
