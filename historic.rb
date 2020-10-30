@@ -158,9 +158,9 @@ average_mem = mem_total / mem_count
 average_mem_cpus = mem_total / cpu_count
 
 print "Total jobs processed: #{total_jobs_count}"
-if states.count > 1
+if states.count > 1 
   print " ("
-  print states.map { |state, jobs| "#{state}: #{jobs.count}" }.join(', ')
+  print states.map { |state, jobs| "#{state}: #{jobs.count}" if jobs.count > 0 }.compact.join(', ')
   print ")"
 end
 puts
@@ -173,8 +173,8 @@ if states.count > 1
               rescue NoMethodError
                 0
               end
-    "#{state}: #{job_str}mins"
-  }.join(', ')
+    "#{state}: #{job_str}mins" if job_str > 0
+  }.compact.join(', ')
   print ")"
 end
 puts
@@ -187,8 +187,8 @@ if states.count > 1
               rescue NoMethodError
                 0
               end
-    "#{state}: #{job_str}MB"
-  }.join(', ')
+    "#{state}: #{job_str}MB" if job_str > 0
+  }.compact.join(', ')
   print ")"
 end
 puts
