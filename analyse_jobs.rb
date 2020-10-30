@@ -289,5 +289,10 @@ puts
 puts "-" * 50
 puts "Instances Summary"
 puts
-
+puts "Best Fit"
 puts InstanceCalculator.grouped_best_fit_description
+
+if include_any_node_numbers
+  puts "\nIgnoring node counts"
+  puts InstanceCalculator.grouped_any_nodes_description
+end
