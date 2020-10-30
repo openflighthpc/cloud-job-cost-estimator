@@ -73,7 +73,7 @@ def print_state_cost_totals(states, cost_type)
     job_str = jobs.map { |job| job[cost_type] }.reduce(&:+).to_f.ceil(2)
     "#{state}: $#{job_str}" if job_str > 0
   }.compact.join(', ')
-  print ")\n"
+  print ")"
 end
 
 def print_state_averages(states, attribute, unit)
@@ -86,7 +86,7 @@ def print_state_averages(states, attribute, unit)
               end
     "#{state}: #{"$" if unit == "$"}#{job_str}#{unit if unit != "$"}" if job_str > 0
   }.compact.join(', ')
-  print ")\n"
+  print ")"
 end
 
 user_args = Hash[ ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/) ]
@@ -256,8 +256,10 @@ end
 puts
 print "Average time per job: #{(total_time / total_jobs_count).ceil(2)}mins"
 print_state_averages(states, :time, "mins") if states.count > 1
+puts
 print "Average mem per job: #{average_mem.ceil(2)}MB"
 print_state_averages(states, :mem, "MB") if states.count > 1
+puts
 
 puts "Average mem per cpu: #{average_mem_cpus.ceil(2)}MB"
 puts "Max mem for 1 job: #{max_mem.ceil(2)}MB"
@@ -266,14 +268,18 @@ puts
 if include_any_node_numbers
   print "Overall cost ignoring node counts: $#{overall_any_nodes_cost.to_f.ceil(2)}"
   print_state_cost_totals(states, :any_nodes_cost) if states.count > 1
+  puts
   print "Average cost per job ignoring node counts: $#{(overall_any_nodes_cost / total_jobs_count).to_f.ceil(2)}"
   print_state_averages(states, :any_nodes_cost, "$") if states.count > 1
+  puts
 end
 print "Overall best fit cost: $#{overall_best_fit_cost.to_f.ceil(2)}"
 print_state_cost_totals(states, :best_fit_cost) if states.count > 1
+puts
 
 print "Average best fit cost per job: $#{(overall_best_fit_cost / total_jobs_count).to_f.ceil(2)}"
 print_state_averages(states, :best_fit_cost, "$") if states.count > 1
+puts
 
 puts "#{over_resourced_count} jobs requiring larger instances than minimum necessary, to match number of nodes"
 puts "#{excess_nodes_count} jobs requiring more nodes than used on physical cluster"
