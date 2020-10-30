@@ -130,7 +130,7 @@ file.readlines.each do |line|
       any_nodes_cost_diff = instance_calculator.any_nodes_best_fit_cost_diff
       msg << " Ignoring node counts, best fit would be #{instance_calculator.any_nodes_description}"
       msg << " at a cost of $#{any_nodes_cost.to_f.ceil(2)}"
-      msg << any_nodes_cost_diff == 0 ? " (same cost)" : " (-$#{any_nodes_cost_diff.to_f.ceil(3)})"
+      msg << (any_nodes_cost_diff == 0 ? " (same cost)" : " (-$#{any_nodes_cost_diff.to_f.ceil(3)})")
       msg << "."
     end
   end
