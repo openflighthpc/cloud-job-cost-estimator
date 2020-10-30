@@ -14,6 +14,8 @@ For Slurm to generate the data required by the application, Slurm accounting mus
 
 ## Configuration
 
+No configuration on the user's part is required prior to the use of this application.
+
 ### Source data and files
 
 The application reads Slurm job data from a provided text file, with each job separated by a newline and job attributes separated by "|".
@@ -24,7 +26,7 @@ The required data in the expected format can be retrieved from Slurm using the f
 sacct --allclusters --allusers --parsable2 --starttime 2020-09-01T00:00:00 --endtime 2020-09-30T23:59:59 -o jobid,jobname,elapsed,state,maxrss,allocgres,alloctres
 ```
 
-The result must be placed in a `.txt` or `.csv` file in the same location as the application.
+The result must be placed in a file to be read by the application (see [operation](#operation) for more details).
 
 ### Instances Information
 
@@ -38,7 +40,7 @@ This file is ready to use, but will require updating if these instances' resourc
 
 ## Operation
 
-The application can be run using `ruby analyse_jobs.rb --input=filename.txt`, using the name of the file you wish to analyse. Results will be printed to the console.
+The application can be run using `ruby analyse_jobs.rb --input=/path_to/filename`, using the path of the file you wish to analyse. Results will be printed to the console.
 
 ### Job analysis
 
