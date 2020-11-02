@@ -291,9 +291,9 @@ puts "Instances Summary"
 puts
 
 puts "Best Fit"
-puts InstanceCalculator.grouped_best_fit_description(customer_facing)
+puts InstanceCalculator.grouped_best_fit_description(customer_facing, :azure)
 
 if include_any_node_numbers
   puts "\nIgnoring node counts"
-  puts InstanceCalculator.grouped_any_nodes_description(customer_facing)
+  puts InstanceCalculator.grouped_any_nodes_description(customer_facing, :azure)
 end
