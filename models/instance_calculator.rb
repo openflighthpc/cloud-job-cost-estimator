@@ -102,7 +102,7 @@ class InstanceCalculator
         descriptions.sort_by do |key|
           [
             key.split(" ")[1][0],
-            key.split(" ")[1][/\d+/],
+            key.split(" ")[1][/\d+/].to_i,
             key.split(" ")[0]
           ]
         end
