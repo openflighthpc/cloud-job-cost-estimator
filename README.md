@@ -30,7 +30,7 @@ The result must be placed in a file to be read by the application (see [operatio
 
 ### Instances Information
 
-Details of the instance types to consider are included in the file `instance_details.yml`. The application considers the three instance categories `gpu`, `compute` and `mem` when making its suggestions, equating to high GPU, high CPU and high memory instances respectively. Currently AWS and Azure are supported cloud providers. By default, AWS instances will be considered (see [optional arguments](#optional_arguments) for more details).
+Details of the instance types to consider are included in the file `instance_details.yml`. The application considers the three instance categories `gpu`, `compute` and `mem` when making its suggestions, equating to high GPU, high CPU and high memory instances respectively. Currently AWS and Azure are supported cloud providers. By default, AWS instances will be considered (see [optional arguments](#optional-arguments) for more details).
 
 Costs and resources for an instance type on both AWS and Azure scale proportionately with size. This file therefore contains details of the smallest ('base') instances for each of these types and the sizes available on each cloud provider, denoted in the 'multipliers' field.
 
@@ -108,7 +108,7 @@ Best Fit
 
 The application can also be run with up to five optional arguments.
 
-### --provider=
+#### --provider=
 
 `ruby analyse_jobs.rb --input=filename.txt --provider=azure`
 

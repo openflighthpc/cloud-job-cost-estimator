@@ -155,7 +155,6 @@ over_resourced_count = 0
 excess_nodes_count = 0
 overall_any_nodes_cost = 0.0
 overall_best_fit_cost = 0.0
-grouped_best_fit = {}
 file.readlines.each do |line|
   details = line.split("|")
   job = Job.new(*details)
@@ -296,9 +295,9 @@ puts "Instances Summary"
 puts
 
 puts "Best Fit"
-puts InstanceCalculator.grouped_best_fit_description(customer_facing, :azure)
+puts InstanceCalculator.grouped_best_fit_description(customer_facing, provider)
 
 if include_any_node_numbers
   puts "\nIgnoring node counts"
-  puts InstanceCalculator.grouped_any_nodes_description(customer_facing, :azure)
+  puts InstanceCalculator.grouped_any_nodes_description(customer_facing, provider)
 end
