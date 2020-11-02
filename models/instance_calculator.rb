@@ -45,7 +45,7 @@ class InstanceCalculator
     @@grouped_any_nodes
   end
 
-  def self.grouped_best_fit_description(customer_facing=fale)
+  def self.grouped_best_fit_description(customer_facing=false)
     return @@grouped_best_fit_description if @@grouped_best_fit_description
     
     @@grouped_best_fit_description = ""
@@ -269,10 +269,10 @@ class InstanceCalculator
 
   def update_best_fit_grouping
     if @@grouped_best_fit.has_key?(best_fit_description)
-      @@grouped_best_fit[best_fit_description][:cost] = @@grouped_best_fit[best_fit_description][:cost] + total_best_fit_cost
-      @@grouped_best_fit[best_fit_description][:time] = @@grouped_best_fit[best_fit_description][:time] + @time
-      @@grouped_best_fit[best_fit_description][:jobs] = @@grouped_best_fit[best_fit_description][:jobs] += 1
-      @@grouped_best_fit[best_fit_description][:over_resourced] = @@grouped_best_fit[best_fit_description][:over_resourced] += 1 if over_resourced?
+      @@grouped_best_fit[best_fit_description][:cost] += total_best_fit_cost
+      @@grouped_best_fit[best_fit_description][:time] += @time
+      @@grouped_best_fit[best_fit_description][:jobs] += 1
+      @@grouped_best_fit[best_fit_description][:over_resourced] += 1 if over_resourced?
     else
       @@grouped_best_fit[best_fit_description] = {cost: total_best_fit_cost, time: @time, jobs: 1, over_resourced: over_resourced? ? 1 : 0 }
     end
@@ -280,9 +280,9 @@ class InstanceCalculator
 
   def update_any_nodes_grouping
     if @@grouped_any_nodes.has_key?(any_nodes_description)
-      @@grouped_any_nodes[any_nodes_description][:cost] = @@grouped_any_nodes[any_nodes_description][:cost] + total_any_nodes_cost
-      @@grouped_any_nodes[any_nodes_description][:time] = @@grouped_any_nodes[any_nodes_description][:time] + @time
-      @@grouped_any_nodes[any_nodes_description][:jobs] = @@grouped_any_nodes[any_nodes_description][:jobs] += 1
+      @@grouped_any_nodes[any_nodes_description][:cost] += total_any_nodes_cost
+      @@grouped_any_nodes[any_nodes_description][:time] += @time
+      @@grouped_any_nodes[any_nodes_description][:jobs] += 1
     else
       @@grouped_any_nodes[any_nodes_description] = {cost: total_any_nodes_cost, time: @time, jobs: 1}
     end
