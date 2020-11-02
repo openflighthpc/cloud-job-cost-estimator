@@ -85,7 +85,7 @@ states = Hash[PERMITTED_STATES.collect { |x| [x, [] ] } ]
 state_times = Hash[PERMITTED_STATES.collect { |x| [x, 0] } ]
 
 include_any_node_numbers = user_args.key?('include-any-node-numbers')
-
+customer_facing = user_args.key?('customer-facing')
 output = user_args['output'] ? "output/#{user_args['output']}" : nil
 
 if output
@@ -164,7 +164,7 @@ file.readlines.each do |line|
 
   msg = "Job #{job.jobid} used #{gpus} GPUs, #{cpus}CPUs & #{mem.ceil(2)}MB on #{nodes} node(s) for #{time.ceil(2)}mins. "
 
-  instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes, time, include_any_node_numbers)
+  instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes, time, include_any_node_numbers, customer_facing)
   base_cost = instance_calculator.total_base_cost
   
   best_fit_cost = instance_calculator.total_best_fit_cost
@@ -195,9 +195,9 @@ file.readlines.each do |line|
   if output
     CSV.open(output, "ab") do |csv|
       results = ["'#{job.jobid}", job.state, gpus, cpus, max_rss, mem.ceil(2), nodes, time,
-                 instance_calculator.best_fit_count, instance_calculator.best_fit_type, best_fit_cost.to_f]
+                 instance_calculator.best_fit_count, instance_calculator.best_fit_name, best_fit_cost.to_f]
       if include_any_node_numbers
-        results.concat([instance_calculator.any_nodes_count, instance_calculator.any_nodes_type])
+        results.concat([instance_calculator.any_nodes_count, instance_calculator.any_nodes_name])
         results.concat([instance_calculator.total_any_nodes_cost.to_f, instance_calculator.any_nodes_best_fit_cost_diff.to_f])  
       end
       csv << results

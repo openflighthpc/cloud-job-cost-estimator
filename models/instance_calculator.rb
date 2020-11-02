@@ -32,12 +32,13 @@ class InstanceCalculator
   attr_reader :best_fit_instance, :best_fit_count
   attr_reader :any_nodes_instance, :any_nodes_count
 
-  def initialize(total_cpus, total_gpus, total_mem, total_nodes, time, include_any_nodes=true)
+  def initialize(total_cpus, total_gpus, total_mem, total_nodes, time, include_any_nodes=true, customer_facing=false)
     @total_cpus = total_cpus
     @total_gpus = total_gpus
     @total_mem = total_mem.to_f # in MB
     @total_nodes = total_nodes
     @time = time # in mins
+    @customer_facing = customer_facing
     @base_instance, @base_instance_count = calculate_base_instance_numbers
     @best_fit_instance, @best_fit_count = calculate_best_fit_instances
     @any_nodes_instance, @any_nodes_count = calculate_best_fit_instances(false) if include_any_nodes
@@ -47,8 +48,12 @@ class InstanceCalculator
     @base_instance.type
   end
 
+  def base_instance_name
+    @customer_facing ? @base_instance.customer_facing_name : @base_instance.name
+  end
+
   def base_instances_description
-    "#{@base_instance_count} #{@base_instance.name}"
+    "#{@base_instance_count} #{base_instance_name}"
   end
 
   def base_cost_per_min
@@ -59,12 +64,12 @@ class InstanceCalculator
     base_cost_per_min * @time
   end
 
-  def best_fit_type
-    @best_fit_instance.name
+  def best_fit_name
+    @customer_facing ? @best_fit_instance.customer_facing_name : @best_fit_instance.name
   end
 
   def best_fit_description
-    "#{@best_fit_count} #{@best_fit_instance.name}"
+    "#{@best_fit_count} #{best_fit_name}"
   end
 
   def best_fit_cost_per_min
@@ -75,16 +80,16 @@ class InstanceCalculator
     best_fit_cost_per_min * @time
   end
 
-  def any_nodes_type
+  def any_nodes_name
     return if !@any_nodes_instance
 
-    @any_nodes_instance.name
+    @customer_facing ? @any_nodes_instance.customer_facing_name : @any_nodes_instance.name
   end
 
   def any_nodes_description
     return if !@any_nodes_instance
 
-    "#{@any_nodes_count} #{@any_nodes_instance.name}"
+    "#{@any_nodes_count} #{any_nodes_name}"
   end
 
   def any_nodes_cost_per_min
