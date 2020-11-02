@@ -31,7 +31,7 @@ require "bigdecimal"
 class Instance
   attr_reader :type, :multiplier
 
-  INSTANCE_OPTIONS = YAML.load(File.read("instance_options.yml"))
+  INSTANCE_OPTIONS = YAML.load(File.read("instance_details.yml"))
   NAMES = %w[small medium large]
 
   def initialize(type, multiplier = 1, provider=:aws)

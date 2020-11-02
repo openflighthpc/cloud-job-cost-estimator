@@ -109,6 +109,11 @@ state_times = Hash[PERMITTED_STATES.collect { |x| [x, 0] } ]
 include_any_node_numbers = user_args.key?('include-any-node-numbers')
 customer_facing = user_args.key?('customer-facing')
 output = user_args['output'] ? "output/#{user_args['output']}" : nil
+provider = user_args['provider'] ? user_args['provider'].downcase.to_sym : :aws
+if ![:aws, :azure].include?(provider)
+  puts 'Please specify a valid cloud provider. AWS and Azure are currently supported.'
+  exit 1
+end
 
 if output
   if File.file?(output)
@@ -188,7 +193,7 @@ file.readlines.each do |line|
 
   msg = "Job #{job.jobid} used #{gpus} GPUs, #{cpus}CPUs & #{mem.ceil(2)}MB on #{nodes} node(s) for #{time.ceil(2)}mins. "
 
-  instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes, time, include_any_node_numbers, customer_facing, :azure)
+  instance_calculator = InstanceCalculator.new(cpus, gpus, mem, nodes, time, include_any_node_numbers, customer_facing, provider)
   base_cost = instance_calculator.total_base_cost
   
   best_fit_cost = instance_calculator.total_best_fit_cost
