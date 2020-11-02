@@ -67,6 +67,28 @@ def determine_time(amount)
   seconds / 60.0
 end
 
+def print_state_cost_totals(states, cost_type)
+  print " ("
+  print states.map { |state, jobs|
+    job_str = jobs.map { |job| job[cost_type] }.reduce(&:+).to_f.ceil(2)
+    "#{state}: $#{job_str}" if job_str > 0
+  }.compact.join(', ')
+  print ")"
+end
+
+def print_state_averages(states, attribute, unit)
+  print " ("
+  print states.map { |state, jobs|
+    job_str = begin
+                (jobs.map { |job| job[attribute] }.reduce(&:+).to_f / jobs.length).ceil(2)
+              rescue NoMethodError
+                0
+              end
+    "#{state}: #{"$" if unit == "$"}#{job_str}#{unit if unit != "$"}" if job_str > 0
+  }.compact.join(', ')
+  print ")"
+end
+
 user_args = Hash[ ARGV.join(' ').scan(/--?([^=\s]+)(?:=(\S+))?/) ]
 PERMITTED_STATES = user_args.key?('include-failed') ?
   %w(FAILED CANCELLED NODE_FAIL OUT_OF_MEMORY TIMEOUT COMPLETED) :
@@ -179,6 +201,7 @@ file.readlines.each do |line|
   end
   msg << "Instance config of #{instance_calculator.best_fit_description} would cost $#{best_fit_cost.ceil(2).to_f}."
   
+  any_nodes_cost = nil
   if include_any_node_numbers
     any_nodes_cost = instance_calculator.total_any_nodes_cost
     overall_any_nodes_cost += any_nodes_cost
@@ -191,7 +214,7 @@ file.readlines.each do |line|
     end
   end
 
-  states[job.state] << { message: msg, time: time, mem: mem, best_fit_cost: best_fit_cost }
+  states[job.state] << { message: msg, time: time, mem: mem, best_fit_cost: best_fit_cost, any_nodes_cost: any_nodes_cost }
   if output
     CSV.open(output, "ab") do |csv|
       results = ["'#{job.jobid}", job.state, gpus, cpus, max_rss, mem.ceil(2), nodes, time,
@@ -232,32 +255,10 @@ if states.count > 1
 end
 puts
 print "Average time per job: #{(total_time / total_jobs_count).ceil(2)}mins"
-if states.count > 1
-  print " ("
-  print states.map { |state, jobs| 
-    job_str = begin
-                jobs.map { |job| job[:time] }.reduce(&:+) / jobs.length
-              rescue NoMethodError
-                0
-              end
-    "#{state}: #{job_str}mins" if job_str > 0
-  }.compact.join(', ')
-  print ")"
-end
+print_state_averages(states, :time, "mins") if states.count > 1
 puts
 print "Average mem per job: #{average_mem.ceil(2)}MB"
-if states.count > 1
-  print " ("
-  print states.map { |state, jobs|
-    job_str = begin
-                (jobs.map { |job| job[:mem] }.reduce(&:+) / jobs.length).ceil(2)
-              rescue NoMethodError
-                0
-              end
-    "#{state}: #{job_str}MB" if job_str > 0
-  }.compact.join(', ')
-  print ")"
-end
+print_state_averages(states, :mem, "MB") if states.count > 1
 puts
 
 puts "Average mem per cpu: #{average_mem_cpus.ceil(2)}MB"
@@ -265,33 +266,19 @@ puts "Max mem for 1 job: #{max_mem.ceil(2)}MB"
 puts "Max mem per cpu: #{max_mem_per_cpu.ceil(2)}MB"
 puts
 if include_any_node_numbers
-  puts "Overall cost ignoring node counts: $#{overall_any_nodes_cost.to_f.ceil(2)}"
-  puts "Average cost per job ignoring node counts: $#{(overall_any_nodes_cost / total_jobs_count).to_f.ceil(2)}"
+  print "Overall cost ignoring node counts: $#{overall_any_nodes_cost.to_f.ceil(2)}"
+  print_state_cost_totals(states, :any_nodes_cost) if states.count > 1
+  puts
+  print "Average cost per job ignoring node counts: $#{(overall_any_nodes_cost / total_jobs_count).to_f.ceil(2)}"
+  print_state_averages(states, :any_nodes_cost, "$") if states.count > 1
+  puts
 end
 print "Overall best fit cost: $#{overall_best_fit_cost.to_f.ceil(2)}"
-if states.count > 1
-  print " ("
-  print states.map { |state, jobs|
-    job_str = jobs.map { |job| job[:best_fit_cost] }.reduce(&:+).to_f.ceil(2)
-    "#{state}: $#{job_str}" if job_str > 0
-  }.compact.join(', ')
-  print ")"
-end
+print_state_cost_totals(states, :best_fit_cost) if states.count > 1
 puts
 
 print "Average best fit cost per job: $#{(overall_best_fit_cost / total_jobs_count).to_f.ceil(2)}"
-if states.count > 1
-  print " ("
-  print states.map { |state, jobs|
-    job_str = begin
-                (jobs.map { |job| job[:best_fit_cost] }.reduce(&:+).to_f / jobs.length).ceil(2)
-              rescue NoMethodError
-                0
-              end
-    "#{state}: $#{job_str}" if job_str > 0
-  }.compact.join(', ')
-  print ")"
-end
+print_state_averages(states, :best_fit_cost, "$") if states.count > 1
 puts
 
 puts "#{over_resourced_count} jobs requiring larger instances than minimum necessary, to match number of nodes"
