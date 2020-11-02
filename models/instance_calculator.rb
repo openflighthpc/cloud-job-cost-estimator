@@ -28,9 +28,77 @@
 require_relative 'instance'
 
 class InstanceCalculator
+  @@grouped_best_fit = {}
+  @@grouped_any_nodes = {}
+  @@grouped_best_fit_description = nil
+  @@grouped_any_nodes_description = nil
+
   attr_reader :base_instance, :base_instance_count
   attr_reader :best_fit_instance, :best_fit_count
   attr_reader :any_nodes_instance, :any_nodes_count
+
+  def self.grouped_best_fit
+    @@grouped_best_fit
+  end
+
+  def self.grouped_any_nodes
+    @@grouped_any_nodes
+  end
+
+  def self.grouped_best_fit_description(customer_facing=false)
+    return @@grouped_best_fit_description if @@grouped_best_fit_description
+    
+    @@grouped_best_fit_description = ""
+    sort_descriptions(@@grouped_best_fit.keys, customer_facing).each do |instance_and_number|
+      group = @@grouped_best_fit[instance_and_number]
+      @@grouped_best_fit_description <<  "#{group[:jobs]} job(s) can be run on #{instance_and_number}. "
+      @@grouped_best_fit_description << "Total runtime for these jobs would be #{group[:time]}mins, costing $#{group[:cost].to_f.ceil(2)}. "
+      if group[:over_resourced] > 0
+        @@grouped_best_fit_description << "#{group[:over_resourced]}#{"(all)" if group[:over_resourced] == group[:jobs]}"
+        @@grouped_best_fit_description << " of these are over resourced, to match node counts."
+      end
+      @@grouped_best_fit_description << "\n"
+    end
+
+    @@grouped_best_fit_description
+  end
+
+  def self.grouped_any_nodes_description(customer_facing=false)
+    return @@grouped_any_nodes_description if @@grouped_any_nodes_description
+
+    @@grouped_any_nodes_description = ""
+    sort_descriptions(@@grouped_any_nodes.keys, customer_facing).each do |instance_and_number|
+      group = @@grouped_any_nodes[instance_and_number]
+      @@grouped_any_nodes_description <<  "#{group[:jobs]} job(s) can be run on #{instance_and_number}. "
+      @@grouped_any_nodes_description << "Total runtime for these jobs would be #{group[:time]}mins, costing $#{group[:cost].to_f.ceil(2)}.\n"
+    end
+
+    @@grouped_any_nodes_description
+  end
+
+  def self.sort_descriptions(descriptions, customer_facing)
+    if customer_facing
+      descriptions.sort_by do |key|
+        size = key.split("(")[1][0...-1]
+        size_order = Instance::NAMES.index(size)
+        size_order = 2 + key.count("x") if !size_order
+        [
+          key.split(" ")[1].split("(")[0],
+          size_order,
+          key.split(" ")[0].to_i
+        ]
+      end
+    else
+      descriptions.sort_by do |key|
+        [
+          key.split(" ")[1].split(".")[0],
+          key.split(".")[1].split("x")[0].to_i,
+          key.split(".")[1],
+          key.split(" ")[0].to_i
+        ]
+      end
+    end
+  end
 
   def initialize(total_cpus, total_gpus, total_mem, total_nodes, time, include_any_nodes=true, customer_facing=false)
     @total_cpus = total_cpus
@@ -42,6 +110,8 @@ class InstanceCalculator
     @base_instance, @base_instance_count = calculate_base_instance_numbers
     @best_fit_instance, @best_fit_count = calculate_best_fit_instances
     @any_nodes_instance, @any_nodes_count = calculate_best_fit_instances(false) if include_any_nodes
+    update_best_fit_grouping
+    update_any_nodes_grouping if include_any_nodes
   end
 
   def base_instance_type
@@ -84,6 +154,10 @@ class InstanceCalculator
     return if !@any_nodes_instance
 
     @customer_facing ? @any_nodes_instance.customer_facing_name : @any_nodes_instance.name
+  end
+
+  def over_resourced?
+    @best_fit_instance.multiplier * @best_fit_count != @base_instance_count
   end
 
   def any_nodes_description
@@ -191,5 +265,26 @@ class InstanceCalculator
     end
 
     return Instance.new(base_instance_type, best_fit.to_i), nodes
+  end
+
+  def update_best_fit_grouping
+    if @@grouped_best_fit.has_key?(best_fit_description)
+      @@grouped_best_fit[best_fit_description][:cost] += total_best_fit_cost
+      @@grouped_best_fit[best_fit_description][:time] += @time
+      @@grouped_best_fit[best_fit_description][:jobs] += 1
+      @@grouped_best_fit[best_fit_description][:over_resourced] += 1 if over_resourced?
+    else
+      @@grouped_best_fit[best_fit_description] = {cost: total_best_fit_cost, time: @time, jobs: 1, over_resourced: over_resourced? ? 1 : 0 }
+    end
+  end
+
+  def update_any_nodes_grouping
+    if @@grouped_any_nodes.has_key?(any_nodes_description)
+      @@grouped_any_nodes[any_nodes_description][:cost] += total_any_nodes_cost
+      @@grouped_any_nodes[any_nodes_description][:time] += @time
+      @@grouped_any_nodes[any_nodes_description][:jobs] += 1
+    else
+      @@grouped_any_nodes[any_nodes_description] = {cost: total_any_nodes_cost, time: @time, jobs: 1}
+    end
   end
 end

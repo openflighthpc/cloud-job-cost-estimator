@@ -66,12 +66,12 @@ Job 005 used 0 GPUs, 40CPUs & 8.81MB on 1 node(s) for 12mins. To meet requiremen
 
 All cost figures only include the core instance costs.
 
-### Totals
+### Job Totals
 
-The application includes a final summary of the jobs, with information regarding totals and averages. The number of jobs requiring extra nodes or over sized instances is also highlighted.
+After individual job anaylsis, the application includes a jobs summary with information regarding totals and averages. The number of jobs requiring extra nodes or over sized instances is also highlighted.
 
 ```
-Totals
+Job Totals
 
 Total completed jobs: 578
 Average time per job: 27mins
@@ -85,6 +85,24 @@ Average best fit cost per job: $40.06
 35 jobs requiring larger instances than base equivalent
 50 jobs requiring more nodes than used on physical cluster
 ```
+
+### Instances Summary
+
+The final section displays a summary of how many jobs have the same suggested type, size and number of instances. This also highlights how may of these are over resourced in order to meet the original number of nodes.
+
+```
+Instances Summary
+
+Best Fit
+31 job(s) can be run on 1 c5.large. Total runtime for these jobs would be 10124mins, costing $17.01. 
+96 job(s) can be run on 3 c5.large. Total runtime for these jobs would be 65139mins, costing $328.31. 96(all) of these are over resourced, to match node counts.
+28 job(s) can be run on 10 c5.large. Total runtime for these jobs would be 33mins, costing $0.56.
+119 job(s) can be run on 1 c5.xlarge. Total runtime for these jobs would be 163375mins, costing $548.95. 
+7 job(s) can be run on 1 c5.2xlarge. Total runtime for these jobs would be 245243mins, costing $1648.04. 6 of these are over resourced, to match node counts.
+339 job(s) can be run on 1 c5.4xlarge. Total runtime for these jobs would be 5046775mins, costing $67828.66. 8 of these are over resourced, to match node counts.
+21 job(s) can be run on 1 r5.large. Total runtime for these jobs would be 1219mins, costing $3.0. 
+13 job(s) can be run on 1 r5.xlarge. Total runtime for these jobs would be 1488mins, costing $7.33. 
+``` 
 
 ### Optional Arguments
 
@@ -108,6 +126,15 @@ A summary of costs when ignoring node counts will also be added to the totals se
 ```
 Overall base cost (ignoring node counts): $22344.02
 Average base cost per job: $38.66
+```
+
+This will similarly add a section to the instances summary, showing how many jobs have the same suggested instance type, size and number when ignoring node counts.
+
+```
+Ignoring node counts
+14 job(s) can be run on 1 c5.large. Total runtime for these jobs would be 3731mins, costing $6.27.
+4 job(s) can be run on 3 c5.large. Total runtime for these jobs would be 158750mins, costing $800.1.
+5 job(s) can be run on 5 c5.large. Total runtime for these jobs would be 165mins, costing $1.39.
 ```
 
 #### --include-failed
