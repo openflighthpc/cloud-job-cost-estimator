@@ -45,11 +45,11 @@ class InstanceCalculator
     @@grouped_any_nodes
   end
 
-  def self.grouped_best_fit_description
+  def self.grouped_best_fit_description(customer_facing=fale)
     return @@grouped_best_fit_description if @@grouped_best_fit_description
     
     @@grouped_best_fit_description = ""
-    sort_descriptions(@@grouped_best_fit.keys).each do |instance_and_number|
+    sort_descriptions(@@grouped_best_fit.keys, customer_facing).each do |instance_and_number|
       group = @@grouped_best_fit[instance_and_number]
       @@grouped_best_fit_description <<  "#{group[:jobs]} job(s) can be run on #{instance_and_number}. "
       @@grouped_best_fit_description << "Total runtime for these jobs would be #{group[:time]}mins, costing $#{group[:cost].to_f.ceil(2)}. "
@@ -63,11 +63,11 @@ class InstanceCalculator
     @@grouped_best_fit_description
   end
 
-  def self.grouped_any_nodes_description
+  def self.grouped_any_nodes_description(customer_facing=false)
     return @@grouped_any_nodes_description if @@grouped_any_nodes_description
 
     @@grouped_any_nodes_description = ""
-    sort_descriptions(@@grouped_any_nodes.keys).each do |instance_and_number|
+    sort_descriptions(@@grouped_any_nodes.keys, customer_facing).each do |instance_and_number|
       group = @@grouped_any_nodes[instance_and_number]
       @@grouped_any_nodes_description <<  "#{group[:jobs]} job(s) can be run on #{instance_and_number}. "
       @@grouped_any_nodes_description << "Total runtime for these jobs would be #{group[:time]}mins, costing $#{group[:cost].to_f.ceil(2)}.\n"
@@ -76,14 +76,27 @@ class InstanceCalculator
     @@grouped_any_nodes_description
   end
 
-  def self.sort_descriptions(descriptions)
-    descriptions.sort_by do |key|
-      [
-        key.split(" ")[1].split(".")[0],
-        key.split(".")[1].split("x")[0].to_i,
-        key.split(".")[1],
-        key.split(" ")[0].to_i
-      ]
+  def self.sort_descriptions(descriptions, customer_facing)
+    if customer_facing
+      descriptions.sort_by do |key|
+        size = key.split("(")[1][0...-1]
+        size_order = Instance::NAMES.index(size)
+        size_order = 2 + key.count("x") if !size_order
+        [
+          key.split(" ")[1].split("(")[0],
+          size_order,
+          key.split(" ")[0].to_i
+        ]
+      end
+    else
+      descriptions.sort_by do |key|
+        [
+          key.split(" ")[1].split(".")[0],
+          key.split(".")[1].split("x")[0].to_i,
+          key.split(".")[1],
+          key.split(" ")[0].to_i
+        ]
+      end
     end
   end
 
