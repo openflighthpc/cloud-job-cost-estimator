@@ -31,19 +31,20 @@ require "bigdecimal"
 class Instance
   attr_reader :type, :multiplier
 
-  AWS_INSTANCES = YAML.load(File.read("aws_instances.yml"))
+  INSTANCE_OPTIONS = YAML.load(File.read("instance_options.yml"))
   NAMES = %w[small medium large]
 
-  def initialize(type, multiplier = 1)
-    raise ArgumentError, 'Not a valid instance type' if !AWS_INSTANCES.keys.include?(type.to_sym)
-    raise ArgumentError, 'Not a valid multiplier for that type' if !AWS_INSTANCES[type.to_sym][:multipliers].include?(multiplier)
+  def initialize(type, multiplier = 1, provider=:aws)
+    raise ArgumentError, 'Not a valid instance type' if !INSTANCE_OPTIONS[provider].keys.include?(type.to_sym)
+    raise ArgumentError, 'Not a valid multiplier for that type' if !INSTANCE_OPTIONS[provider][type.to_sym][:multipliers].include?(multiplier)
     @type = type.to_sym
     @multiplier = multiplier
-    @base_cpus = AWS_INSTANCES[@type][:base][:cpus]
-    @base_gpus = AWS_INSTANCES[@type][:base][:gpus]
-    @base_mem = AWS_INSTANCES[@type][:base][:mem]
-    @base_price_per_min = BigDecimal(AWS_INSTANCES[@type][:base][:price_per_min], 8)
-    @base_name = AWS_INSTANCES[@type][:base][:name]
+    @provider = provider
+    @base_cpus = INSTANCE_OPTIONS[@provider][@type][:base][:cpus]
+    @base_gpus = INSTANCE_OPTIONS[@provider][@type][:base][:gpus]
+    @base_mem = INSTANCE_OPTIONS[@provider][@type][:base][:mem]
+    @base_price_per_min = BigDecimal(INSTANCE_OPTIONS[@provider][@type][:base][:price_per_min], 8)
+    @base_name = INSTANCE_OPTIONS[@provider][@type][:base][:name]
   end
 
   def ==(other)
@@ -67,7 +68,7 @@ class Instance
   end
 
   def possible_multipliers
-    AWS_INSTANCES[@type][:multipliers].sort
+    INSTANCE_OPTIONS[@provider][@type][:multipliers].sort
   end
 
   def descriptive_type
@@ -88,12 +89,20 @@ class Instance
     if @multiplier == 1
       @base_name
     else
-      if type == :gpu
-        @base_name.gsub("2", (2 * @multiplier).to_s)
+      if @provider == :aws
+        if type == :gpu
+          @base_name.gsub("2", (2 * @multiplier).to_s)
+        else
+          number_of_xs = @multiplier / 2
+          number_of_xs = nil if number_of_xs == 1
+          @base_name.gsub(".", ".#{number_of_xs}x")
+        end
       else
-        number_of_xs = @multiplier / 2
-        number_of_xs = nil if number_of_xs == 1
-        @base_name.gsub(".", ".#{number_of_xs}x")
+        if type == :gpu
+          @base_name.sub("6", (6 * @multiplier).to_s)
+        else
+          @base_name.sub("2", (2 * @multiplier).to_s)
+        end
       end
     end
   end
