@@ -30,13 +30,13 @@ The result must be placed in a file to be read by the application (see [operatio
 
 ### Instances Information
 
-Details of the instance types to consider are included in the file `aws_instances.yml`. The application considers the three instance categories `gpu`, `compute` and `mem` when making its suggestions, equating to high GPU, high CPU and high memory instances respectively.
+Details of the instance types to consider are included in the file `instance_details.yml`. The application considers the three instance categories `gpu`, `compute` and `mem` when making its suggestions, equating to high GPU, high CPU and high memory instances respectively. Currently AWS and Azure are supported cloud providers. By default, AWS instances will be considered (see [optional arguments](#optional-arguments) for more details).
 
-AWS costs and resources for an instance type scale proportionately with size. This file therefore contains details of the smallest ('base') instances for each of these types and the sizes available, denoted in the 'multipliers' field.
+Costs and resources for an instance type on both AWS and Azure scale proportionately with size. This file therefore contains details of the smallest ('base') instances for each of these types and the sizes available on each cloud provider, denoted in the 'multipliers' field.
 
 For example, the GPU instance `p3.2xlarge` has multipliers of 4 and 8. These equate to the instances `p3.8xlarge` and `p3.16xlarge`, which we know have costs, GPUs, CPUs and memory 4 and 8 times that of `p3.2xlarge` respectively.
 
-This file is ready to use, but will require updating if these instances' resources, costs or available sizes change. The costs and size availability information currently included is that for eu-west-2 (London).
+This file is ready to use, but will require updating if these instances' resources, costs or available sizes change. The costs and size availability information currently included is that for eu-west-2/UK South (London).
 
 ## Operation
 
@@ -44,7 +44,7 @@ The application can be run using `ruby analyse_jobs.rb --input=/path_to/filename
 
 ### Job analysis
 
-This will determine appropriate AWS instances that would meet each completed job's GPUs, CPUs, MaxRSS (maximum memory, with an extra 10% added) and number of nodes used. Both the instance name and the number required are displayed, as well as the costs required to run those instances for the time the job took (rounded up to the nearest minute). The application will always recommend instances of the same type and size.
+This will determine appropriate instances that would meet each completed job's GPUs, CPUs, MaxRSS (maximum memory, with an extra 10% added) and number of nodes used. Both the instance name and the number required are displayed, as well as the costs required to run those instances for the time the job took (rounded up to the nearest minute). The application will always recommend instances of the same type and size.
 
 ```
 Job 001 used 16 GPUs, 32CPUs & 4181.11MB on 4 node(s) for 167mins. Instance config of 4 p3.8xlarge would cost $159.84.
@@ -106,7 +106,18 @@ Best Fit
 
 ### Optional Arguments
 
-The application can also be run with up to four optional arguments.
+The application can also be run with up to five optional arguments.
+
+#### --provider=
+
+`ruby analyse_jobs.rb --input=filename.txt --provider=azure`
+
+By default the application will make suggestions using AWS instances. This can be changed using the above optional argument, allowing for Azure instances to be considered instead. Currently only AWS and Azure instances are supported.
+
+```
+Job 001 used 16 GPUs, 32CPUs & 4181.11MB on 4 node(s) for 167mins. Instance config of 4 NC24 v3 would cost $159.84.
+Job 002 used 0 GPUs, 4CPUs & 8.81MB on 1 node(s) for 12mins. Instance config of 1 F4s v2 would cost $0.05.
+```
 
 #### --include-any-node-numbers
 

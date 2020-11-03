@@ -45,11 +45,11 @@ class InstanceCalculator
     @@grouped_any_nodes
   end
 
-  def self.grouped_best_fit_description(customer_facing=false)
+  def self.grouped_best_fit_description(customer_facing=false, provider=:aws)
     return @@grouped_best_fit_description if @@grouped_best_fit_description
     
     @@grouped_best_fit_description = ""
-    sort_descriptions(@@grouped_best_fit.keys, customer_facing).each do |instance_and_number|
+    sort_descriptions(@@grouped_best_fit.keys, customer_facing, provider).each do |instance_and_number|
       group = @@grouped_best_fit[instance_and_number]
       @@grouped_best_fit_description <<  "#{group[:jobs]} job(s) can be run on #{instance_and_number}. "
       @@grouped_best_fit_description << "Total runtime for these jobs would be #{group[:time]}mins, costing $#{group[:cost].to_f.ceil(2)}. "
@@ -63,11 +63,11 @@ class InstanceCalculator
     @@grouped_best_fit_description
   end
 
-  def self.grouped_any_nodes_description(customer_facing=false)
+  def self.grouped_any_nodes_description(customer_facing=false, provider=:aws)
     return @@grouped_any_nodes_description if @@grouped_any_nodes_description
 
     @@grouped_any_nodes_description = ""
-    sort_descriptions(@@grouped_any_nodes.keys, customer_facing).each do |instance_and_number|
+    sort_descriptions(@@grouped_any_nodes.keys, customer_facing, provider).each do |instance_and_number|
       group = @@grouped_any_nodes[instance_and_number]
       @@grouped_any_nodes_description <<  "#{group[:jobs]} job(s) can be run on #{instance_and_number}. "
       @@grouped_any_nodes_description << "Total runtime for these jobs would be #{group[:time]}mins, costing $#{group[:cost].to_f.ceil(2)}.\n"
@@ -76,7 +76,7 @@ class InstanceCalculator
     @@grouped_any_nodes_description
   end
 
-  def self.sort_descriptions(descriptions, customer_facing)
+  def self.sort_descriptions(descriptions, customer_facing, provider=:aws)
     if customer_facing
       descriptions.sort_by do |key|
         size = key.split("(")[1][0...-1]
@@ -89,24 +89,35 @@ class InstanceCalculator
         ]
       end
     else
-      descriptions.sort_by do |key|
-        [
-          key.split(" ")[1].split(".")[0],
-          key.split(".")[1].split("x")[0].to_i,
-          key.split(".")[1],
-          key.split(" ")[0].to_i
-        ]
+      if provider == :aws
+        descriptions.sort_by do |key|
+          [
+            key.split(" ")[1].split(".")[0],
+            key.split(".")[1].split("x")[0].to_i,
+            key.split(".")[1],
+            key.split(" ")[0].to_i
+          ]
+        end
+      else
+        descriptions.sort_by do |key|
+          [
+            key.split(" ")[1][0],
+            key.split(" ")[1][/\d+/].to_i,
+            key.split(" ")[0]
+          ]
+        end
       end
     end
   end
 
-  def initialize(total_cpus, total_gpus, total_mem, total_nodes, time, include_any_nodes=true, customer_facing=false)
+  def initialize(total_cpus, total_gpus, total_mem, total_nodes, time, include_any_nodes=true, customer_facing=false, provider=:aws)
     @total_cpus = total_cpus
     @total_gpus = total_gpus
     @total_mem = total_mem.to_f # in MB
     @total_nodes = total_nodes
     @time = time # in mins
     @customer_facing = customer_facing
+    @provider = provider
     @base_instance, @base_instance_count = calculate_base_instance_numbers
     @best_fit_instance, @best_fit_count = calculate_best_fit_instances
     @any_nodes_instance, @any_nodes_count = calculate_best_fit_instances(false) if include_any_nodes
@@ -187,7 +198,7 @@ class InstanceCalculator
   def any_nodes_best_fit_cost_diff
     return if !@any_nodes_instance
 
-    total_best_fit_cost - total_any_nodes_cost
+    total_any_nodes_cost - total_best_fit_cost
   end
 
   private
@@ -204,13 +215,13 @@ class InstanceCalculator
     # Gpus are priority, as can only be given by gpu instances.
     # Additionally, gpu instances have high cpu counts and memory.
     if @total_gpus > 0
-      instance = Instance.new(:gpu) 
+      instance = Instance.new(:gpu, 1, @provider) 
     else
       # A compute instance has 2GB per 1 cpu. If need more than this, use a mem instance,
       # which has 8GB per cpu.
       mem_per_cpu = @total_mem / @total_cpus
       base_instance_type = mem_per_cpu > 2000 ? :mem : :compute
-      instance = Instance.new(base_instance_type)
+      instance = Instance.new(base_instance_type, 1, @provider)
     end
 
     while gpu_count < @total_gpus || cpu_count < @total_cpus || mem_count < @total_mem
@@ -248,7 +259,7 @@ class InstanceCalculator
       if count < target
         nodes = 2
       else
-        return Instance.new(base_instance_type, best_fit.to_i), 1
+        return Instance.new(base_instance_type, best_fit.to_i, @provider), 1
       end
     end
     
@@ -264,7 +275,7 @@ class InstanceCalculator
       end
     end
 
-    return Instance.new(base_instance_type, best_fit.to_i), nodes
+    return Instance.new(base_instance_type, best_fit.to_i, @provider), nodes
   end
 
   def update_best_fit_grouping
