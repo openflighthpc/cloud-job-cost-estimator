@@ -198,7 +198,7 @@ class InstanceCalculator
   def any_nodes_best_fit_cost_diff
     return if !@any_nodes_instance
 
-    total_best_fit_cost - total_any_nodes_cost
+    total_any_nodes_cost - total_best_fit_cost
   end
 
   private
