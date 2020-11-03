@@ -193,8 +193,8 @@ If this argument is included, generalised, customer facing names will be used fo
 Job 007 used 8 GPUs, 10CPUs & 8.06MB on 1 node(s) for 2mins. Instance config of 1 GPU(large) would cost $0.96.
 Job 008 used 0 GPUs, 4CPUs & 5.28MB on 1 node(s) for 92mins. Instance config of 1 Compute(medium) would cost $0.31.
 Job 009 used 0 GPUs, 10CPUs & 7.17MB on 1 node(s) for 12mins. To match number of nodes, larger instance(s) than job resources require must be used. Instance config of 1 Compute(xlarge) would cost $0.17.
-
 ```
+
 This will apply to all suggestions, including those saved to a csv if the `--output= flag` is also used.
 
 # Contributing
