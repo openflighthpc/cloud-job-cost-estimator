@@ -133,7 +133,7 @@ if output
 
   csv_headers = %w[job_id state gpus cpus base_max_rss_mb adjusted_max_rss_mb num_nodes 
                    elapsed_mins suggested_num suggested_type suggested_cost_usd]
-  csv_headers.concat(%w[any_nodes_num any_nodes_type any_nodes_cost_usd cost_diff_usd]) if include_any_node_numbers
+  csv_headers.concat(%w[any_nodes_num any_nodes_type any_nodes_cost_usd cost_saving_usd]) if include_any_node_numbers
   CSV.open(output, "wb") do |csv|
     csv << csv_headers
   end
@@ -214,7 +214,7 @@ file.readlines.each do |line|
       any_nodes_cost_diff = instance_calculator.any_nodes_best_fit_cost_diff
       msg << " Ignoring node counts, best fit would be #{instance_calculator.any_nodes_description}"
       msg << " at a cost of $#{any_nodes_cost.to_f.ceil(2)}"
-      msg << (any_nodes_cost_diff == 0 ? " (same cost)" : " (-$#{any_nodes_cost_diff.to_f.ceil(3)})")
+      msg << (any_nodes_cost_diff == 0 ? " (same cost)" : " (saving $#{any_nodes_cost_diff.to_f.ceil(3)})")
       msg << "."
     end
   end
