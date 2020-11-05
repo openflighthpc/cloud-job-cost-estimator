@@ -126,7 +126,7 @@ Job 002 used 0 GPUs, 4CPUs & 8.81MB on 1 node(s) for 12mins. Instance config of 
 With this argument included, instance configurations will also be suggested with any number of nodes (regardless of how many the job actually used), if this result is different from the original suggestion. This includes the associated cost and how this differs (if at all):
 
 ```
-Job 005 used 0 GPUs, 40CPUs & 8.81MB on 1 node(s) for 12mins. To meet requirements, larger instance(s) required than base equivalent. Instance config of 1 c5.12xlarge would cost $0.49. Ignoring node counts, best fit would be 5 c5.2xlarge at a cost of $0.41 (-$0.081).
+Job 005 used 0 GPUs, 40CPUs & 8.81MB on 1 node(s) for 12mins. To meet requirements, larger instance(s) required than base equivalent. Instance config of 1 c5.12xlarge would cost $0.49. Ignoring node counts, best fit would be 5 c5.2xlarge at a cost of $0.41 (saving $0.081).
 Job 006 used 8 GPUs, 36CPUs & 908.6MB on 2 node(s) for 18mins. Instance config of 2 p3.8xlarge would cost $8.62. Ignoring node counts, best fit would be 1 p3.16xlarge at a cost of $8.62 (same cost).
 ```
 
